@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM Panda — Reset your password</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --accent: #5fb13a;
+    --accent-dark: #c4eb02;
+    --dark: #191919;
+    --card: #272727;
+    --muted: rgba(255,255,255,0.55);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f0f0f; font-family: 'Roboto', Arial, sans-serif; color: #fff; padding: 48px 16px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 600px; margin: 0 auto; }
+
+  @keyframes reveal { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal { opacity: 0; animation: reveal 800ms cubic-bezier(0.16,1,0.3,1) forwards; }
+  .d1 { animation-delay: 80ms; } .d2 { animation-delay: 180ms; } .d3 { animation-delay: 300ms; } .d4 { animation-delay: 440ms; }
+
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .mark { width: 40px; height: 40px; border-radius: 999px; background: var(--accent); color: var(--dark); font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+  .brand-name { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+
+  .card { position: relative; overflow: hidden; background: var(--card); border: 1px solid rgba(255,255,255,0.06); border-radius: 24px; padding: 40px; }
+  .ghost { position: absolute; right: -16px; bottom: -28px; pointer-events: none; user-select: none; font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 120px; line-height: 1; color: transparent; -webkit-text-stroke: 1px var(--accent); opacity: 0.06; letter-spacing: -4px; }
+
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+  .eyebrow .dot { width: 28px; height: 28px; border-radius: 999px; background: var(--accent); display: flex; align-items: center; justify-content: center; }
+  .eyebrow .dot svg { width: 14px; height: 14px; }
+  .eyebrow span { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); }
+
+  h1 { font-family: 'Unbounded', sans-serif; font-weight: 700; text-transform: uppercase; font-size: 30px; line-height: 1.1; letter-spacing: -0.5px; margin-bottom: 16px; }
+  p.lead { color: var(--muted); font-size: 15px; line-height: 1.7; margin-bottom: 28px; max-width: 90%; }
+
+  .pill { display: inline-flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--accent); color: var(--dark); border-radius: 999px; padding: 6px 6px 6px 24px; text-decoration: none; transition: background 300ms; }
+  .pill:hover { background: var(--accent-dark); }
+  .pill .label-stack { height: 22px; overflow: hidden; position: relative; }
+  .pill .label-stack span { display: block; font-weight: 700; font-size: 15px; line-height: 22px; transition: transform 300ms; }
+  .pill:hover .label-stack span { transform: translateY(-22px); }
+  .pill .badge { width: 40px; height: 40px; border-radius: 999px; background: var(--dark); overflow: hidden; position: relative; flex-shrink: 0; }
+  .pill .badge svg { position: absolute; top: 50%; left: 50%; width: 18px; height: 18px; transform: translate(-50%,-50%); stroke: var(--accent); transition: transform 300ms; }
+  .pill .badge .c2 { transform: translate(-250%,-50%); }
+  .pill:hover .badge .c1 { transform: translate(150%,-50%); }
+  .pill:hover .badge .c2 { transform: translate(-50%,-50%); }
+
+  .warn { margin-top: 24px; border: 1px solid rgba(245,166,35,0.35); background: rgba(245,166,35,0.08); border-radius: 12px; padding: 12px 14px; font-size: 12px; color: #f5a623; line-height: 1.6; }
+  .fallback { margin-top: 20px; font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.6; word-break: break-all; }
+  .fallback a { color: var(--accent); text-decoration: none; }
+
+  .foot { margin-top: 28px; padding: 0 8px; display: flex; justify-content: space-between; align-items: center; }
+  .foot small { color: rgba(255,255,255,0.35); font-size: 11px; }
+  .foot .stroke { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 18px; text-transform: uppercase; color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.18); letter-spacing: 1px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand reveal d1">
+      <div class="mark">P</div>
+      <div class="brand-name">LLM Panda</div>
+    </div>
+
+    <div class="card reveal d2">
+      <div class="ghost">PANDA</div>
+
+      <div class="eyebrow">
+        <span class="dot">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#191919" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m10.5 12.5 6-6"/><path d="m17 7 1.5 1.5"/><path d="m14 9 1.5 1.5"/></svg>
+        </span>
+        <span>Password reset</span>
+      </div>
+
+      <h1 class="reveal d3">Reset your<br>password</h1>
+      <p class="lead reveal d3">
+        We got a request to reset your LLM Panda password. Click below to choose a new
+        one. If you didn't ask for this, you can safely ignore this email.
+      </p>
+
+      <a class="pill reveal d4" href="{{RESET_URL}}">
+        <span class="label-stack">
+          <span>Reset password</span>
+          <span>Reset password</span>
+        </span>
+        <span class="badge">
+          <svg class="c1" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>
+          <svg class="c2" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>
+        </span>
+      </a>
+
+      <p class="warn">This link expires in 1 hour and can be used once. Resetting your password signs you out of all sessions.</p>
+
+      <p class="fallback">
+        Button not working? Paste this link into your browser:<br>
+        <a href="{{RESET_URL}}">{{RESET_URL}}</a>
+      </p>
+    </div>
+
+    <div class="foot">
+      <small>© LLM Panda · One key. Every free LLM.</small>
+      <span class="stroke">LLM PANDA</span>
+    </div>
+  </div>
+</body>
+</html>

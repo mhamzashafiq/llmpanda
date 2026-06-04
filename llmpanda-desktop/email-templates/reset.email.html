@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<title>Reset your LLM Panda password</title>
+</head>
+<body style="margin:0;padding:0;background:#ffffff;-webkit-text-size-adjust:100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="background:#ffffff;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
+
+          <!-- brand -->
+          <tr><td style="padding:0 0 24px 4px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+              <td width="40" style="width:40px;height:40px;background:#5fb13a;border-radius:40px;text-align:center;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:18px;color:#191919;line-height:40px;">P</td>
+              <td style="padding-left:12px;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:14px;letter-spacing:1px;color:#191919;text-transform:uppercase;">LLM PANDA</td>
+            </tr></table>
+          </td></tr>
+
+          <!-- card -->
+          <tr><td style="background:#272727;border-radius:24px;padding:40px;">
+
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#5fb13a;padding-bottom:18px;">&#128273;&nbsp;&nbsp;Password reset</div>
+
+            <h1 style="margin:0 0 16px 0;font-family:'Unbounded',Arial,Helvetica,sans-serif;font-weight:bold;text-transform:uppercase;font-size:28px;line-height:1.15;color:#ffffff;letter-spacing:-0.3px;">Reset your password</h1>
+
+            <p style="margin:0 0 30px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#b3b3b3;">
+              We got a request to reset your LLM Panda password. Click below to choose a new one. If you didn't ask for this, you can safely ignore this email.
+            </p>
+
+            <!-- apex pill button: green pill + dark chevron badge (static) -->
+            <a href="{{RESET_URL}}" style="text-decoration:none;display:inline-block;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" bgcolor="#5fb13a" style="border-radius:999px;">
+                <tr>
+                  <td style="padding:0 4px 0 26px;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:15px;line-height:48px;color:#191919;white-space:nowrap;">Reset password</td>
+                  <td style="padding:4px 4px 4px 8px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td width="40" height="40" align="center" valign="middle" bgcolor="#191919" style="width:40px;height:40px;border-radius:999px;color:#5fb13a;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;line-height:40px;text-align:center;">&raquo;</td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+            </a>
+
+            <!-- amber warning (apex status-color exception) -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:26px;">
+              <tr><td style="background:#2b2410;border:1px solid #5c4a12;border-radius:12px;padding:12px 14px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#f5a623;">
+                This link expires in 1 hour and can be used once. Resetting your password signs you out of all sessions.
+              </td></tr>
+            </table>
+
+            <p style="margin:20px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#8a8a8a;word-break:break-all;">
+              Button not working? Paste this link into your browser:<br>
+              <a href="{{RESET_URL}}" style="color:#5fb13a;text-decoration:none;">{{RESET_URL}}</a>
+            </p>
+
+          </td></tr>
+
+          <!-- footer -->
+          <tr><td style="padding:24px 8px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6f6f6f;">
+            &copy; LLM Panda &middot; One key. Every free LLM.
+          </td></tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

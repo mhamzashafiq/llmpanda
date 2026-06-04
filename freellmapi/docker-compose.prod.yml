@@ -1,0 +1,22 @@
+# Production deploy of the multi-tenant LLM Panda app on the VPS.
+# DB is the external llmpanda-prod-db container on the llmpanda-prod-net network.
+# host.docker.internal lets the app reach the host's Postfix (SMTP) on :25.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: llmpanda-app:latest
+    container_name: llmpanda-app
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:3011:3001"
+    networks:
+      - llmpanda-prod-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  llmpanda-prod-net:
+    external: true

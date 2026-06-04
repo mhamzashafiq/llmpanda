@@ -1,0 +1,83 @@
+{
+  "name": "llmpanda-desktop",
+  "private": true,
+  "version": "1.0.0",
+  "description": "LLM Panda — local desktop app (embedded Postgres, no login, fully offline).",
+  "main": "electron/main.cjs",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail --names server,client \"npm run dev -w server\" \"npm run dev -w client\"",
+    "test": "npm run test -w server && npm run test -w client --if-present",
+    "build": "npm run build -w server && npm run build -w client",
+    "build:server": "npm run build -w server",
+    "electron": "electron .",
+    "electron:dev": "npm run build && electron .",
+    "dist": "npm run build && electron-builder",
+    "release": "npm run build && electron-builder --publish always"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "@sentry/node": "^10.56.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.44.2",
+    "electron-updater": "^6.8.3",
+    "embedded-postgres": "17.9.0-beta.17",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "nodemailer": "^8.0.10",
+    "pg-boss": "^12.18.2",
+    "postgres": "^3.4.9",
+    "zod": "^3.24.4"
+  },
+  "build": {
+    "appId": "io.llmpanda.desktop",
+    "productName": "LLM Panda",
+    "asar": false,
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://llmpanda.io"
+      }
+    ],
+    "files": [
+      "electron/**/*",
+      "server/dist/**/*",
+      "server/package.json",
+      "client/dist/**/*",
+      "build/icon.png",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.cjs"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "windows.${ext}"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Development",
+      "icon": "build/icon.png"
+    }
+  }
+}

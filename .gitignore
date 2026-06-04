@@ -1,0 +1,42 @@
+# ── Dependencies ────────────────────────────────────────────────
+**/node_modules/
+
+# ── Build outputs ───────────────────────────────────────────────
+**/dist/
+**/.vite/
+**/out/
+
+# ── Secrets & local data (NEVER commit) ─────────────────────────
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
+**/server/data/
+**/*.db
+**/*.db-wal
+**/*.db-shm
+**/encryption.key
+*.pem
+*.key
+*.keystore
+
+# ── Personal deployment scripts (contain keys/credentials) ──────
+deploy-pi.sh
+update-hermes.sh
+**/deploy-pi.sh
+**/update-hermes.sh
+
+# ── OS / editor junk ────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+__MACOSX/
+Thumbs.db
+*.log
+npm-debug.log*
+.idea/
+
+# ── Claude local overrides (keep shared skills/rules, drop machine-local) ──
+**/.claude/settings.local.json
+
+# Ignore vscode AI rules
+.github/instructions/codacy.instructions.md
