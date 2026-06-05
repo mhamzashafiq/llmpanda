@@ -54,6 +54,7 @@
       "server/package.json",
       "client/dist/**/*",
       "build/icon.png",
+      "build/panda-logo.png",
       "package.json",
       "node_modules/**/*"
     ],

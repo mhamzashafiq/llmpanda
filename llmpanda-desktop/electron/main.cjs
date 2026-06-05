@@ -139,7 +139,7 @@ function waitForServer() {
 // Written to userData (writable) so it can reference the bundled panda icon via
 // a file:// URL — a data: page can't load a local image, hence the temp file.
 function splashFile() {
-  const logo = appPath('build', 'icon.png')
+  const logo = appPath('build', 'panda-logo.png')
   const logoTag = fs.existsSync(logo)
     ? `<img class="m" src="${pathToFileURL(logo).href}" alt="LLM Panda">`
     : `<div class="m mp">P</div>`
@@ -159,7 +159,7 @@ function splashFile() {
 // A frameless modal over the dashboard, driven from main via executeJavaScript
 // (window.__update(phase, pct)) — no preload IPC needed.
 function updateWindowFile() {
-  const logo = appPath('build', 'icon.png')
+  const logo = appPath('build', 'panda-logo.png')
   const logoTag = fs.existsSync(logo)
     ? `<img class="m" src="${pathToFileURL(logo).href}" alt="LLM Panda">`
     : `<div class="m mp">P</div>`
