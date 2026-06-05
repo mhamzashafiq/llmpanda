@@ -90,6 +90,8 @@ function useDarkMode() {
 
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { dark, toggle } = useDarkMode()
+  // Desktop app runs in local mode (no accounts) — hide "Sign out" there.
+  const isDesktop = typeof window !== 'undefined' && (window as unknown as { llmpanda?: { desktop?: boolean } }).llmpanda?.desktop
   const footBtn =
     'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium uppercase tracking-wide text-white/60 transition-colors hover:bg-white/5 hover:text-white cursor-pointer'
   return (
@@ -122,10 +124,12 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
           )}
           <span>{dark ? 'Light mode' : 'Dark mode'}</span>
         </button>
-        <button type="button" onClick={() => logout()} className={footBtn} aria-label="Sign out">
-          <svg {...iconProps}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
-          <span>Sign out</span>
-        </button>
+        {!isDesktop && (
+          <button type="button" onClick={() => logout()} className={footBtn} aria-label="Sign out">
+            <svg {...iconProps}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+            <span>Sign out</span>
+          </button>
+        )}
       </div>
     </aside>
   )
