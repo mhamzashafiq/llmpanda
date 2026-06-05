@@ -164,6 +164,39 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://opencode.ai/zen/v1',
 }));
 
+// OpenCode Free — OpenAI-compatible free pool (https://opencode.ai/zen/go/v1):
+// MiniMax, Kimi, GLM, DeepSeek, Qwen. Bearer auth with a free OpenCode token.
+register(new OpenAICompatProvider({
+  platform: 'opencode-free',
+  name: 'OpenCode Free',
+  baseUrl: 'https://opencode.ai/zen/go/v1',
+  timeoutMs: 120000,
+}));
+
+// Chutes.ai — decentralized OpenAI-compatible inference (https://llm.chutes.ai/v1).
+register(new OpenAICompatProvider({
+  platform: 'chutes',
+  name: 'Chutes',
+  baseUrl: 'https://llm.chutes.ai/v1',
+  timeoutMs: 120000,
+}));
+
+// Alibaba DashScope (Qwen) — OpenAI-compatible mode (international endpoint).
+register(new OpenAICompatProvider({
+  platform: 'dashscope',
+  name: 'DashScope (Qwen)',
+  baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+  timeoutMs: 120000,
+}));
+
+// Alibaba ModelScope — OpenAI-compatible inference API (https://api-inference.modelscope.cn/v1).
+register(new OpenAICompatProvider({
+  platform: 'modelscope',
+  name: 'ModelScope',
+  baseUrl: 'https://api-inference.modelscope.cn/v1',
+  timeoutMs: 120000,
+}));
+
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()
 // behave — but the real instance is built per-key by resolveProvider(), since
 // a custom provider's base URL is user-supplied and lives on the api_keys row.

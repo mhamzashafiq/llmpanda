@@ -22,6 +22,7 @@ export async function initDb(): Promise<void> {
   // Seed the catalog + the shared (org_id IS NULL) fallback template FIRST, then
   // provision the local operator so its org clones that full template (not empty).
   await seedCatalog();
+  await ensureProviderModels();
   if (LOCAL_MODE) await ensureLocalUser();
   await ensureOrgUnifiedKeys();
   await ensureDefaultClients();
@@ -134,6 +135,46 @@ async function seedCatalog(): Promise<void> {
         ON CONFLICT (org_id, model_db_id) DO NOTHING`;
     }
     console.log(`Seeded ${SEED_FALLBACK.length} fallback-template rows`);
+  }
+}
+
+// Models for newly-added providers (P2) — idempotent upsert so existing DBs gain
+// them, with a fallback-chain template row + per-org enrollment. They route only
+// once the org adds that provider's key (BYOK).
+const NEW_PROVIDER_MODELS: Array<{ platform: string; model_id: string; display_name: string; intelligence_rank: number; speed_rank: number; size_label: string; context_window: number }> = [
+  { platform: 'opencode-free', model_id: 'minimax-m2.7', display_name: 'MiniMax M2.7 (OpenCode Free)', intelligence_rank: 4, speed_rank: 6, size_label: 'Large', context_window: 256000 },
+  { platform: 'opencode-free', model_id: 'minimax-m2.5', display_name: 'MiniMax M2.5 (OpenCode Free)', intelligence_rank: 5, speed_rank: 6, size_label: 'Large', context_window: 256000 },
+  { platform: 'opencode-free', model_id: 'kimi-k2.6', display_name: 'Kimi K2.6 (OpenCode Free)', intelligence_rank: 4, speed_rank: 6, size_label: 'Large', context_window: 256000 },
+  { platform: 'opencode-free', model_id: 'glm-5', display_name: 'GLM-5 (OpenCode Free)', intelligence_rank: 4, speed_rank: 6, size_label: 'Large', context_window: 200000 },
+  { platform: 'opencode-free', model_id: 'deepseek-v4-pro', display_name: 'DeepSeek V4 Pro (OpenCode Free)', intelligence_rank: 3, speed_rank: 6, size_label: 'Frontier', context_window: 163840 },
+  { platform: 'opencode-free', model_id: 'qwen3.7-plus', display_name: 'Qwen3.7 Plus (OpenCode Free)', intelligence_rank: 3, speed_rank: 6, size_label: 'Large', context_window: 262144 },
+  { platform: 'chutes', model_id: 'Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8', display_name: 'Qwen3 Coder 480B (Chutes)', intelligence_rank: 2, speed_rank: 6, size_label: 'Frontier', context_window: 262144 },
+  { platform: 'chutes', model_id: 'zai-org/GLM-4.6', display_name: 'GLM-4.6 (Chutes)', intelligence_rank: 4, speed_rank: 6, size_label: 'Large', context_window: 200000 },
+  { platform: 'chutes', model_id: 'deepseek-ai/DeepSeek-V3.1', display_name: 'DeepSeek V3.1 (Chutes)', intelligence_rank: 3, speed_rank: 6, size_label: 'Frontier', context_window: 163840 },
+  { platform: 'chutes', model_id: 'MiniMaxAI/MiniMax-M2', display_name: 'MiniMax M2 (Chutes)', intelligence_rank: 5, speed_rank: 6, size_label: 'Large', context_window: 200000 },
+  { platform: 'dashscope', model_id: 'qwen3-coder-plus', display_name: 'Qwen3 Coder Plus (DashScope)', intelligence_rank: 2, speed_rank: 5, size_label: 'Frontier', context_window: 1000000 },
+  { platform: 'dashscope', model_id: 'qwen-max', display_name: 'Qwen Max (DashScope)', intelligence_rank: 4, speed_rank: 6, size_label: 'Large', context_window: 32768 },
+  { platform: 'modelscope', model_id: 'Qwen/Qwen3-Coder-480B-A35B-Instruct', display_name: 'Qwen3 Coder 480B (ModelScope)', intelligence_rank: 2, speed_rank: 6, size_label: 'Frontier', context_window: 262144 },
+];
+
+async function ensureProviderModels(): Promise<void> {
+  for (const m of NEW_PROVIDER_MODELS) {
+    await sql`
+      INSERT INTO models (platform, model_id, display_name, intelligence_rank, speed_rank, size_label,
+        rpm_limit, rpd_limit, tpm_limit, tpd_limit, monthly_token_budget, context_window, enabled, supports_vision)
+      VALUES (${m.platform}, ${m.model_id}, ${m.display_name}, ${m.intelligence_rank}, ${m.speed_rank}, ${m.size_label},
+        null, null, null, null, '~free', ${m.context_window}, 1, 0)
+      ON CONFLICT (platform, model_id) DO NOTHING`;
+    await sql`
+      INSERT INTO fallback_config (org_id, model_db_id, priority, enabled)
+      SELECT NULL, mo.id, 900, 1 FROM models mo
+      WHERE mo.platform = ${m.platform} AND mo.model_id = ${m.model_id}
+        AND NOT EXISTS (SELECT 1 FROM fallback_config f WHERE f.org_id IS NULL AND f.model_db_id = mo.id)`;
+    await sql`
+      INSERT INTO fallback_config (org_id, model_db_id, priority, enabled)
+      SELECT o.id, mo.id, 900, 1 FROM organizations o CROSS JOIN models mo
+      WHERE mo.platform = ${m.platform} AND mo.model_id = ${m.model_id}
+      ON CONFLICT (org_id, model_db_id) DO NOTHING`;
   }
 }
 

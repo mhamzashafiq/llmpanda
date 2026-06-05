@@ -24,6 +24,10 @@ export type Platform =
   | 'huggingface'
   | 'together'
   | 'opencode'
+  | 'opencode-free'
+  | 'chutes'
+  | 'dashscope'
+  | 'modelscope'
   // User-configured OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM,
   // Ollama, any base_url). The endpoint URL lives on the api_keys row; see #117.
   | 'custom';
