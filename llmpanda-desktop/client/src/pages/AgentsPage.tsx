@@ -355,6 +355,106 @@ function AgentCard({ agent, root, keyValue }: { agent: AgentDef; root: string; k
   )
 }
 
+// ── OAuth connections (Kiro / …) — opt-in, ToS-risky ────────────────────────
+interface Connection {
+  id: number
+  provider: string
+  authType: string
+  email: string | null
+  label: string | null
+  expiresAt: string | null
+  enabled: boolean
+  createdAt: string
+}
+interface KiroStart { authId: string; userCode: string; verificationUri: string; verificationUriComplete: string; interval: number; expiresIn: number }
+
+function ConnectionsCard() {
+  const queryClient = useQueryClient()
+  const { data: connections = [] } = useQuery<Connection[]>({ queryKey: ['connections'], queryFn: () => apiFetch('/api/connections') })
+  const [flow, setFlow] = useState<{ authId: string; userCode: string; url: string; expiresAt: number } | null>(null)
+  const [status, setStatus] = useState<'idle' | 'pending' | 'connected' | 'error'>('idle')
+
+  const start = useMutation({
+    mutationFn: () => apiFetch<KiroStart>('/api/connections/kiro/start', { method: 'POST', body: JSON.stringify({}) }),
+    onSuccess: (r) => { setFlow({ authId: r.authId, userCode: r.userCode, url: r.verificationUriComplete, expiresAt: Date.now() + r.expiresIn * 1000 }); setStatus('pending') },
+    onError: () => setStatus('error'),
+  })
+  const toggle = useMutation({
+    mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) => apiFetch(`/api/connections/${id}`, { method: 'PATCH', body: JSON.stringify({ enabled }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['connections'] }),
+  })
+  const del = useMutation({
+    mutationFn: (id: number) => apiFetch(`/api/connections/${id}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['connections'] }),
+  })
+
+  // Poll the device-code flow while a connect is in progress.
+  useEffect(() => {
+    if (status !== 'pending' || !flow) return
+    const t = setInterval(async () => {
+      if (Date.now() > flow.expiresAt) { setStatus('error'); setFlow(null); return }
+      try {
+        const r = await apiFetch<{ status: string }>('/api/connections/kiro/poll', { method: 'POST', body: JSON.stringify({ authId: flow.authId }) })
+        if (r.status === 'connected') { setStatus('connected'); setFlow(null); queryClient.invalidateQueries({ queryKey: ['connections'] }) }
+      } catch { /* keep polling */ }
+    }, 3000)
+    return () => clearInterval(t)
+  }, [status, flow, queryClient])
+
+  return (
+    <section className="rounded-2xl border bg-card p-5">
+      <h2 className="font-display text-sm font-bold uppercase tracking-wide">Connect accounts <span className="text-white/40">(advanced)</span></h2>
+      <p className="mt-0.5 text-xs text-muted-foreground">Use another service's account (Kiro = free Claude) through LLM Panda.</p>
+
+      <div className="mt-3 rounded-xl border border-[#f5a623]/40 bg-[#f5a623]/10 px-3 py-2.5 text-[11px] leading-relaxed text-[#f5a623]">
+        ⚠️ This logs into your own account on another service and proxies it through LLM Panda — which
+        may violate that service's Terms of Service (account ban / legal risk). Off by default. Use at
+        your own risk.
+      </div>
+
+      <div className="mt-4 flex items-center gap-2">
+        <Button variant="outline" size="sm" disabled={start.isPending || status === 'pending'} onClick={() => start.mutate()}>
+          {status === 'pending' ? 'Waiting for authorization…' : 'Connect Kiro (free Claude)'}
+        </Button>
+        {status === 'connected' && <span className="text-xs text-[#5fb13a]">Connected ✓</span>}
+        {status === 'error' && <span className="text-xs text-[#ff4d4f]">Auth expired — try again.</span>}
+      </div>
+
+      {flow && status === 'pending' && (
+        <div className="mt-3 rounded-xl border border-white/10 bg-[#272727] px-3 py-3 text-xs">
+          1. Open <a className="text-[#5fb13a] underline" href={flow.url} target="_blank" rel="noreferrer">AWS authorization</a> &nbsp;
+          2. Enter code <code className="select-all rounded bg-black/40 px-1.5 py-0.5 font-mono text-white">{flow.userCode}</code> &nbsp;
+          3. Sign in with your AWS Builder ID. This box updates when done.
+        </div>
+      )}
+
+      {connections.length > 0 && (
+        <ul className="mt-4 divide-y divide-white/5">
+          {connections.map(c => (
+            <li key={c.id} className="flex items-center justify-between gap-3 py-2.5">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">{c.label || c.provider}</div>
+                <div className="text-[11px] text-muted-foreground">{c.email || c.authType}{c.expiresAt ? ` · token expires ${new Date(c.expiresAt).toLocaleString()}` : ''}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggle.mutate({ id: c.id, enabled: !c.enabled })}
+                  className={['relative h-5 w-9 shrink-0 rounded-full transition-colors', c.enabled ? 'bg-[#5fb13a]' : 'bg-white/15'].join(' ')}
+                  aria-pressed={c.enabled}
+                >
+                  <span className={['absolute top-0.5 size-4 rounded-full bg-white transition-all', c.enabled ? 'left-[18px]' : 'left-0.5'].join(' ')} />
+                </button>
+                <Button variant="ghost" size="sm" onClick={() => del.mutate(c.id)} disabled={del.isPending}>Remove</Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
 export default function AgentsPage() {
   const { data: clients = [] } = useQuery<ClientKey[]>({ queryKey: ['client-keys'], queryFn: () => apiFetch('/api/settings/clients') })
   const codingKey = useMemo(() => clients.find(c => c.name === CODING_KEY_NAME && !c.revokedAt), [clients])
@@ -382,6 +482,8 @@ export default function AgentsPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {AGENTS.map(a => <AgentCard key={a.key} agent={a} root={root} keyValue={keyValue} />)}
       </div>
+
+      <ConnectionsCard />
     </div>
   )
 }
