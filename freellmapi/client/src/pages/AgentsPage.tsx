@@ -134,6 +134,17 @@ function snippetFor(a: AgentDef, root: string, key: string): string {
   ].join('\n')
 }
 
+// Best coding-tuned models, picked by name pattern from whatever's available
+// (coder/instruct/reasoning families known to be strong at code). Falls back to
+// the smartest models overall if nothing matches. Capped so the set stays tight.
+const CODING_RX = /(coder|qwen ?3|qwen3|kimi|k2|glm-?[457]|deepseek|minimax|codestral|devstral|mistral[- ]?large|gpt-?oss|cogito|grok.?code|llama[- ]?3\.3|magistral|gemini-?[23][.\d]*[- ]?pro|nemotron|command-?a)/i
+function bestCodingIds(models: ModelRow[], cap = 12): number[] {
+  const usable = models.filter(m => m.hasProvider)
+  const matched = usable.filter(m => CODING_RX.test(m.modelId) || CODING_RX.test(m.displayName))
+  const pool = matched.length ? matched : usable
+  return [...pool].sort((a, b) => a.intelligenceRank - b.intelligenceRank).slice(0, cap).map(m => m.id)
+}
+
 // ── Coding Agents key + model picker ────────────────────────────────────────
 function KeyAndModels({ codingKey, plaintext, onPlaintext }: {
   codingKey: ClientKey | undefined
@@ -212,6 +223,7 @@ function KeyAndModels({ codingKey, plaintext, onPlaintext }: {
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" disabled={!models.length} onClick={() => setSelected(new Set(bestCodingIds(models)))}>✨ Best for coding</Button>
                 {selected.size > 0 && <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Allow all</Button>}
                 <Button variant="outline" size="sm" disabled={!dirty || saveModels.isPending} onClick={() => saveModels.mutate(Array.from(selected))}>
                   {saveModels.isPending ? 'Saving…' : dirty ? 'Save' : 'Saved'}
