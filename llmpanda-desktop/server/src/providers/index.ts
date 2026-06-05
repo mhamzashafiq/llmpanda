@@ -6,6 +6,7 @@ import { CohereProvider } from './cohere.js';
 import { CloudflareProvider } from './cloudflare.js';
 import { VertexProvider } from './vertex.js';
 import { KiroProvider } from './kiro.js';
+import { CopilotProvider } from './copilot.js';
 
 const providers = new Map<Platform, BaseProvider>();
 
@@ -205,6 +206,9 @@ register(new VertexProvider());
 // Kiro (AWS CodeWhisperer) — credential is an OAuth connection (provider_connections),
 // resolved by the router; opt-in, off the default route.
 register(new KiroProvider());
+
+// GitHub Copilot — OAuth connection (GitHub device flow → Copilot token); opt-in.
+register(new CopilotProvider());
 
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()
 // behave — but the real instance is built per-key by resolveProvider(), since

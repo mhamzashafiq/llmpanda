@@ -1,7 +1,11 @@
 import { getSetting, setSetting } from '../db/index.js';
 import { sql } from '../db/client.js';
 import { getProvider, resolveProvider, isKeylessPlatform } from '../providers/index.js';
-import { getKiroAccessToken } from './kiro-connection.js';
+import { getConnectionToken } from './kiro-connection.js';
+
+// Providers whose credential is an OAuth connection (provider_connections), not
+// an api_keys row — resolved per request, gated on an enabled connection.
+const CONNECTION_PLATFORMS = new Set<string>(['kiro', 'copilot']);
 import { decryptForOrg } from '../lib/crypto.js';
 import { canMakeRequest, canUseTokens, isOnCooldown } from './ratelimit.js';
 import {
@@ -324,11 +328,11 @@ export async function routeRequest(
 
     const limits = { rpm: entry.rpm_limit, rpd: entry.rpd_limit, tpm: entry.tpm_limit, tpd: entry.tpd_limit };
 
-    // Connection-credential providers (Kiro): the credential is an OAuth token in
-    // provider_connections, not an api_keys row. Resolve it (refresh if needed).
-    // No enabled connection → skip Kiro entirely (non-connected orgs unaffected).
-    if (entry.platform === 'kiro') {
-      const conn = await getKiroAccessToken(orgId);
+    // Connection-credential providers (Kiro / Copilot): the credential is an OAuth
+    // token in provider_connections, not an api_keys row. Resolve it (refresh if
+    // needed). No enabled connection → skip (non-connected orgs unaffected).
+    if (CONNECTION_PLATFORMS.has(entry.platform)) {
+      const conn = await getConnectionToken(orgId, entry.platform);
       if (!conn) continue;
       if (skipKeys?.has(`${entry.platform}:${entry.model_id}:${conn.connId}`)) continue;
       if (await isOnCooldown(orgId, entry.platform, entry.model_id, conn.connId)) continue;

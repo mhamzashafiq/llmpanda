@@ -1,6 +1,57 @@
 import { sql } from '../db/client.js';
 import { decryptForOrg, encryptForOrg } from '../lib/crypto.js';
 import { refreshKiroToken } from '../lib/oauth/kiro.js';
+import { exchangeCopilotToken } from '../lib/oauth/copilot.js';
+
+interface ConnRow { id: number; secret_enc: string; secret_iv: string; secret_tag: string; expires_at: string | null }
+
+async function loadConnection(orgId: number, provider: string): Promise<{ row: ConnRow; secret: Record<string, any> } | null> {
+  const rows = await sql<ConnRow[]>`
+    SELECT id, secret_enc, secret_iv, secret_tag, expires_at FROM provider_connections
+    WHERE org_id = ${orgId} AND provider = ${provider} AND enabled = 1
+    ORDER BY created_at DESC LIMIT 1`;
+  if (!rows[0]) return null;
+  try {
+    const secret = JSON.parse(await decryptForOrg(orgId, rows[0].secret_enc, rows[0].secret_iv, rows[0].secret_tag));
+    return { row: rows[0], secret };
+  } catch {
+    return null;
+  }
+}
+
+async function persistSecret(orgId: number, id: number, secret: Record<string, any>, expiresAt: Date | null): Promise<void> {
+  const sealed = await encryptForOrg(orgId, JSON.stringify(secret));
+  await sql`UPDATE provider_connections SET secret_enc = ${sealed.encrypted}, secret_iv = ${sealed.iv}, secret_tag = ${sealed.authTag}, expires_at = ${expiresAt} WHERE id = ${id}`;
+}
+
+// Dispatch: resolve a usable token for a connection-credential provider.
+export async function getConnectionToken(orgId: number, provider: string): Promise<{ token: string; connId: number } | null> {
+  if (provider === 'kiro') return getKiroAccessToken(orgId);
+  if (provider === 'copilot') return getCopilotAccessToken(orgId);
+  return null;
+}
+
+// GitHub Copilot: the connection stores the GitHub token + a short-lived Copilot
+// token; re-exchange when the Copilot token is expired/near expiry.
+export async function getCopilotAccessToken(orgId: number): Promise<{ token: string; connId: number } | null> {
+  const c = await loadConnection(orgId, 'copilot');
+  if (!c) return null;
+  const { row, secret } = c;
+  const exp = typeof secret.copilotExpiresAt === 'number' ? secret.copilotExpiresAt : 0;
+  if (!secret.copilotToken || exp < Date.now() + 5 * 60_000) {
+    if (secret.githubToken) {
+      try {
+        const t = await exchangeCopilotToken(secret.githubToken);
+        secret.copilotToken = t.token;
+        secret.copilotExpiresAt = t.expiresAt;
+        await persistSecret(orgId, row.id, secret, new Date(t.expiresAt));
+      } catch {
+        // fall back to stale token; the call will 401 and the proxy retries.
+      }
+    }
+  }
+  return secret.copilotToken ? { token: secret.copilotToken as string, connId: row.id } : null;
+}
 
 // Resolve a usable Kiro access token for an org from its enabled OAuth connection
 // (provider_connections). Refreshes + persists the token when it's expired/near

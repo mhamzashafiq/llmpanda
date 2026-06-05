@@ -371,12 +371,12 @@ interface KiroStart { authId: string; userCode: string; verificationUri: string;
 function ConnectionsCard() {
   const queryClient = useQueryClient()
   const { data: connections = [] } = useQuery<Connection[]>({ queryKey: ['connections'], queryFn: () => apiFetch('/api/connections') })
-  const [flow, setFlow] = useState<{ authId: string; userCode: string; url: string; expiresAt: number } | null>(null)
+  const [flow, setFlow] = useState<{ provider: string; authId: string; userCode: string; url: string; expiresAt: number } | null>(null)
   const [status, setStatus] = useState<'idle' | 'pending' | 'connected' | 'error'>('idle')
 
   const start = useMutation({
-    mutationFn: () => apiFetch<KiroStart>('/api/connections/kiro/start', { method: 'POST', body: JSON.stringify({}) }),
-    onSuccess: (r) => { setFlow({ authId: r.authId, userCode: r.userCode, url: r.verificationUriComplete, expiresAt: Date.now() + r.expiresIn * 1000 }); setStatus('pending') },
+    mutationFn: (provider: 'kiro' | 'copilot') => apiFetch<KiroStart>(`/api/connections/${provider}/start`, { method: 'POST', body: JSON.stringify({}) }).then(r => ({ ...r, provider })),
+    onSuccess: (r) => { setFlow({ provider: r.provider, authId: r.authId, userCode: r.userCode, url: r.verificationUriComplete, expiresAt: Date.now() + r.expiresIn * 1000 }); setStatus('pending') },
     onError: () => setStatus('error'),
   })
   const toggle = useMutation({
@@ -394,7 +394,7 @@ function ConnectionsCard() {
     const t = setInterval(async () => {
       if (Date.now() > flow.expiresAt) { setStatus('error'); setFlow(null); return }
       try {
-        const r = await apiFetch<{ status: string }>('/api/connections/kiro/poll', { method: 'POST', body: JSON.stringify({ authId: flow.authId }) })
+        const r = await apiFetch<{ status: string }>(`/api/connections/${flow.provider}/poll`, { method: 'POST', body: JSON.stringify({ authId: flow.authId }) })
         if (r.status === 'connected') { setStatus('connected'); setFlow(null); queryClient.invalidateQueries({ queryKey: ['connections'] }) }
       } catch { /* keep polling */ }
     }, 3000)
@@ -412,9 +412,12 @@ function ConnectionsCard() {
         your own risk.
       </div>
 
-      <div className="mt-4 flex items-center gap-2">
-        <Button variant="outline" size="sm" disabled={start.isPending || status === 'pending'} onClick={() => start.mutate()}>
-          {status === 'pending' ? 'Waiting for authorization…' : 'Connect Kiro (free Claude)'}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" disabled={start.isPending || status === 'pending'} onClick={() => start.mutate('kiro')}>
+          {status === 'pending' && flow?.provider === 'kiro' ? 'Waiting…' : 'Connect Kiro (free Claude)'}
+        </Button>
+        <Button variant="outline" size="sm" disabled={start.isPending || status === 'pending'} onClick={() => start.mutate('copilot')}>
+          {status === 'pending' && flow?.provider === 'copilot' ? 'Waiting…' : 'Connect GitHub Copilot'}
         </Button>
         {status === 'connected' && <span className="text-xs text-[#5fb13a]">Connected ✓</span>}
         {status === 'error' && <span className="text-xs text-[#ff4d4f]">Auth expired — try again.</span>}

@@ -8,6 +8,7 @@ import {
   listProviderConnections, saveProviderConnection, deleteProviderConnection, setProviderConnectionEnabled,
 } from '../db/index.js';
 import { registerClient, startDeviceAuthorization, pollDeviceToken, KIRO_CONFIG } from '../lib/oauth/kiro.js';
+import { requestDeviceCode as copilotDeviceCode, pollToken as copilotPoll, exchangeCopilotToken } from '../lib/oauth/copilot.js';
 
 export const connectionsRouter = Router();
 
@@ -17,7 +18,7 @@ export const connectionsRouter = Router();
 // chat adapter is built separately and the connection does not route until then.
 
 // In-memory pending device-auth sessions (single-instance prod). authId → creds.
-interface Pending { orgId: number; clientId: string; clientSecret: string; deviceCode: string; region: string; authType: string; startUrl: string; expiresAt: number }
+interface Pending { orgId: number; provider: string; deviceCode: string; authType: string; expiresAt: number; clientId?: string; clientSecret?: string; region?: string; startUrl?: string }
 const pending = new Map<string, Pending>();
 function prune() {
   const now = Date.now();
@@ -46,7 +47,7 @@ connectionsRouter.post('/kiro/start', async (req: Request, res: Response) => {
     prune();
     const authId = crypto.randomBytes(18).toString('hex');
     pending.set(authId, {
-      orgId: org, clientId: client.clientId, clientSecret: client.clientSecret,
+      orgId: org, provider: 'kiro', clientId: client.clientId, clientSecret: client.clientSecret,
       deviceCode: device.deviceCode, region, authType: 'builder-id', startUrl,
       expiresAt: Date.now() + device.expiresIn * 1000,
     });
@@ -71,10 +72,10 @@ connectionsRouter.post('/kiro/poll', async (req: Request, res: Response) => {
   const parsed = pollSchema.safeParse(req.body ?? {});
   if (!parsed.success) { res.status(400).json({ error: { message: 'Invalid request' } }); return; }
   const p = pending.get(parsed.data.authId);
-  if (!p || p.orgId !== org) { res.status(404).json({ error: { message: 'Unknown or expired auth session' } }); return; }
+  if (!p || p.orgId !== org || p.provider !== 'kiro') { res.status(404).json({ error: { message: 'Unknown or expired auth session' } }); return; }
   if (p.expiresAt < Date.now()) { pending.delete(parsed.data.authId); res.status(410).json({ status: 'expired' }); return; }
 
-  const result = await pollDeviceToken(p.clientId, p.clientSecret, p.deviceCode, p.region);
+  const result = await pollDeviceToken(p.clientId!, p.clientSecret!, p.deviceCode, p.region!);
   if (!result.success) {
     if (result.pending) { res.json({ status: 'pending' }); return; }
     res.status(400).json({ status: 'error', error: result.error });
@@ -90,6 +91,51 @@ connectionsRouter.post('/kiro/poll', async (req: Request, res: Response) => {
   });
   pending.delete(parsed.data.authId);
   await audit(req, 'connection.create', 'provider_connection', String(id), { provider: 'kiro' });
+  res.json({ status: 'connected', id });
+});
+
+// Begin a GitHub Copilot device-code flow.
+connectionsRouter.post('/copilot/start', async (req: Request, res: Response) => {
+  const org = requireOrg(req, res);
+  if (org === null) return;
+  try {
+    const device = await copilotDeviceCode();
+    prune();
+    const authId = crypto.randomBytes(18).toString('hex');
+    pending.set(authId, { orgId: org, provider: 'copilot', deviceCode: device.device_code, authType: 'github', expiresAt: Date.now() + device.expires_in * 1000 });
+    res.json({ authId, userCode: device.user_code, verificationUri: device.verification_uri, verificationUriComplete: device.verification_uri, interval: device.interval, expiresIn: device.expires_in });
+  } catch (err: any) {
+    res.status(502).json({ error: { message: err.message } });
+  }
+});
+
+// Poll the GitHub Copilot device-code flow; on success, exchange + store.
+connectionsRouter.post('/copilot/poll', async (req: Request, res: Response) => {
+  const org = requireOrg(req, res);
+  if (org === null) return;
+  const parsed = pollSchema.safeParse(req.body ?? {});
+  if (!parsed.success) { res.status(400).json({ error: { message: 'Invalid request' } }); return; }
+  const p = pending.get(parsed.data.authId);
+  if (!p || p.orgId !== org || p.provider !== 'copilot') { res.status(404).json({ error: { message: 'Unknown or expired auth session' } }); return; }
+  if (p.expiresAt < Date.now()) { pending.delete(parsed.data.authId); res.status(410).json({ status: 'expired' }); return; }
+
+  const result = await copilotPoll(p.deviceCode);
+  if (!result.success) {
+    if (result.pending) { res.json({ status: 'pending' }); return; }
+    res.status(400).json({ status: 'error', error: result.error });
+    return;
+  }
+  let copilot: { token: string; expiresAt: number } | null = null;
+  try { copilot = await exchangeCopilotToken(result.tokens.access_token); } catch { /* stored github token can re-exchange later */ }
+  const id = await saveProviderConnection(org, {
+    provider: 'copilot',
+    authType: p.authType,
+    label: 'GitHub Copilot',
+    secret: { githubToken: result.tokens.access_token, githubRefresh: result.tokens.refresh_token, copilotToken: copilot?.token, copilotExpiresAt: copilot?.expiresAt },
+    expiresAt: copilot ? new Date(copilot.expiresAt) : null,
+  });
+  pending.delete(parsed.data.authId);
+  await audit(req, 'connection.create', 'provider_connection', String(id), { provider: 'copilot' });
   res.json({ status: 'connected', id });
 });
 

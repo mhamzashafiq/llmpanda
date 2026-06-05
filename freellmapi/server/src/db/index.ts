@@ -117,6 +117,11 @@ const NEW_PROVIDER_MODELS: Array<{ platform: string; model_id: string; display_n
   // Kiro (AWS CodeWhisperer) — routes via an OAuth connection (provider_connections)
   { platform: 'kiro', model_id: 'claude-sonnet-4.5', display_name: 'Claude Sonnet 4.5 (Kiro)', intelligence_rank: 1, speed_rank: 5, size_label: 'Frontier', context_window: 200000 },
   { platform: 'kiro', model_id: 'claude-haiku-4.5', display_name: 'Claude Haiku 4.5 (Kiro)', intelligence_rank: 3, speed_rank: 2, size_label: 'Large', context_window: 200000 },
+  // GitHub Copilot — routes via an OAuth connection (Copilot subscription)
+  { platform: 'copilot', model_id: 'claude-sonnet-4.5', display_name: 'Claude Sonnet 4.5 (Copilot)', intelligence_rank: 1, speed_rank: 5, size_label: 'Frontier', context_window: 200000 },
+  { platform: 'copilot', model_id: 'gpt-4o', display_name: 'GPT-4o (Copilot)', intelligence_rank: 4, speed_rank: 4, size_label: 'Large', context_window: 128000 },
+  { platform: 'copilot', model_id: 'gpt-5.4', display_name: 'GPT-5.4 (Copilot)', intelligence_rank: 1, speed_rank: 5, size_label: 'Frontier', context_window: 264000 },
+  { platform: 'copilot', model_id: 'gemini-2.5-pro', display_name: 'Gemini 2.5 Pro (Copilot)', intelligence_rank: 2, speed_rank: 6, size_label: 'Frontier', context_window: 1048576 },
 ];
 
 async function ensureProviderModels(): Promise<void> {
