@@ -134,12 +134,15 @@ function snippetFor(a: AgentDef, root: string, key: string): string {
   ].join('\n')
 }
 
-// Best coding-tuned models, picked by name pattern from whatever's available
-// (coder/instruct/reasoning families known to be strong at code). Falls back to
-// the smartest models overall if nothing matches. Capped so the set stays tight.
-const CODING_RX = /(coder|qwen ?3|qwen3|kimi|k2|glm-?[457]|deepseek|minimax|codestral|devstral|mistral[- ]?large|gpt-?oss|cogito|grok.?code|llama[- ]?3\.3|magistral|gemini-?[23][.\d]*[- ]?pro|nemotron|command-?a)/i
+// Best coding-tuned models, picked by name pattern from whatever's available —
+// families known to emit clean OpenAI-style tool_calls (what coding agents need).
+// EXCLUDES families that leak native tool-call tokens as text (DeepSeek/Cogito/
+// MiniMax/Nemotron) which break Claude Code's tool parsing. Capped + falls back
+// to the smartest non-excluded models if nothing matches.
+const CODING_RX = /(coder|qwen ?3|qwen3|kimi|k2|glm-?[457]|gpt-?oss|codestral|devstral|mistral[- ]?large|llama[- ]?3\.3|magistral|gemini-?[23][.\d]*[- ]?(pro|flash)|command-?a|grok.?code)/i
+const TOOL_UNSAFE_RX = /(deepseek|cogito|minimax|nemotron|deepcoder)/i
 function bestCodingIds(models: ModelRow[], cap = 12): number[] {
-  const usable = models.filter(m => m.hasProvider)
+  const usable = models.filter(m => m.hasProvider && !TOOL_UNSAFE_RX.test(m.modelId) && !TOOL_UNSAFE_RX.test(m.displayName))
   const matched = usable.filter(m => CODING_RX.test(m.modelId) || CODING_RX.test(m.displayName))
   const pool = matched.length ? matched : usable
   return [...pool].sort((a, b) => a.intelligenceRank - b.intelligenceRank).slice(0, cap).map(m => m.id)
