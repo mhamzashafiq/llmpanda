@@ -103,7 +103,9 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
     >
       {/* brand → main domain home */}
       <a href="/" aria-label="LLM Panda home" className="mb-8 flex items-center gap-3 px-2 transition-opacity hover:opacity-80">
-        <img src="/panda-logo.png" alt="LLM Panda" className="size-9 shrink-0 object-contain" />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#5fb13a]">
+          <img src="/panda-logo.png" alt="LLM Panda" className="size-7 object-contain" />
+        </span>
         <span className="font-display text-sm font-bold uppercase tracking-wide">LLM Panda</span>
       </a>
 

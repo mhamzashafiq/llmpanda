@@ -145,7 +145,7 @@ function splashFile() {
     : `<div class="m mp">P</div>`
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>
   html,body{height:100%;margin:0}body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#0d0d0d;color:#fff;font-family:-apple-system,Segoe UI,Roboto,sans-serif}
-  .m{width:96px;height:96px;border-radius:22px;object-fit:contain}
+  .m{width:96px;height:96px;border-radius:999px;background:#5fb13a;object-fit:contain;padding:13px;box-sizing:border-box}
   .mp{background:#5fb13a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:44px;color:#191919}
   .t{font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:14px}.s{font-size:12px;color:#8a8a8a}
   .sp{width:26px;height:26px;border:3px solid #2a2a2a;border-top-color:#5fb13a;border-radius:999px;animation:r .8s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
@@ -166,7 +166,7 @@ function updateWindowFile() {
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>
   html,body{height:100%;margin:0}
   body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0d0d0d;color:#fff;font-family:-apple-system,Segoe UI,Roboto,sans-serif;-webkit-user-select:none;user-select:none}
-  .m{width:84px;height:84px;border-radius:20px;object-fit:contain;animation:bob 2.4s ease-in-out infinite}
+  .m{width:84px;height:84px;border-radius:999px;background:#5fb13a;object-fit:contain;padding:11px;box-sizing:border-box;animation:bob 2.4s ease-in-out infinite}
   .mp{background:#5fb13a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:40px;color:#191919}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
   .t{font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:13px}
