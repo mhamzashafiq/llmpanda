@@ -58,6 +58,9 @@ settingsRouter.post('/clients', async (req: Request, res: Response) => {
 const updateClientSchema = z.object({
   name: z.string().trim().max(80).optional(),
   allowedModelIds: z.array(z.number().int().positive()).max(200).nullable().optional(),
+  tokenSaver: z.boolean().optional(),
+  terseMode: z.boolean().optional(),
+  terseLevel: z.enum(['lite', 'full', 'ultra']).nullable().optional(),
 });
 
 settingsRouter.patch('/clients/:id', async (req: Request, res: Response) => {
@@ -76,6 +79,9 @@ settingsRouter.patch('/clients/:id', async (req: Request, res: Response) => {
   const ok = await updateClientKey(org, id, {
     ...(parsed.data.name !== undefined ? { name: parsed.data.name } : {}),
     ...(parsed.data.allowedModelIds !== undefined ? { allowedModelIds: parsed.data.allowedModelIds } : {}),
+    ...(parsed.data.tokenSaver !== undefined ? { tokenSaver: parsed.data.tokenSaver } : {}),
+    ...(parsed.data.terseMode !== undefined ? { terseMode: parsed.data.terseMode } : {}),
+    ...(parsed.data.terseLevel !== undefined ? { terseLevel: parsed.data.terseLevel } : {}),
   });
   if (!ok) {
     res.status(404).json({ error: { message: 'Client key not found' } });

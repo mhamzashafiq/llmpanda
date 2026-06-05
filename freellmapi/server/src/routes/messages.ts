@@ -13,6 +13,7 @@ import {
   internalToAnthropic,
   AnthropicStreamEncoder,
 } from '../lib/anthropic-translate.js';
+import { transformMessages, type TerseLevel } from '../lib/transform-messages.js';
 import {
   isRetryableError,
   isKeylessPaywall,
@@ -96,7 +97,12 @@ messagesRouter.post('/messages', async (req: Request, res: Response) => {
   }
 
   const reqData = parsed.data;
-  const { messages, options } = anthropicToInternal(reqData);
+  const { messages: builtMessages, options } = anthropicToInternal(reqData);
+  // Per-key transforms (RTK token-saver / terse mode) before estimation + routing.
+  const messages = transformMessages(builtMessages, {
+    tokenSaver: keyCtx.tokenSaver, terseMode: keyCtx.terseMode,
+    terseLevel: (keyCtx.terseLevel ?? undefined) as TerseLevel | undefined,
+  }).messages;
   const stream = reqData.stream ?? false;
 
   // Image requests must route to a vision-capable model.

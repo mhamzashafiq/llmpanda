@@ -218,6 +218,11 @@ export const apiClients = pgTable(
     // Optional JSON array of model db ids this key may route to (the "Coding
     // Agents" allow-list). NULL / empty = no restriction (full org chain).
     allowedModelIds: text('allowed_model_ids'),
+    // Per-key request transforms. token_saver: RTK-compress bulky tool output.
+    // terse_mode + terse_level: inject a brevity (caveman) system prompt.
+    tokenSaver: integer('token_saver').notNull().default(0),
+    terseMode: integer('terse_mode').notNull().default(0),
+    terseLevel: text('terse_level'),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

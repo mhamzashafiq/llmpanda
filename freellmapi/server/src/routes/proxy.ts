@@ -9,6 +9,7 @@ import { checkQuota, bumpQuota } from '../services/quota.js';
 import { resolveClientKeyFull } from '../db/index.js';
 import { sql } from '../db/client.js';
 import { contentToString, messageHasImage, normalizeOutboundContent } from '../lib/content.js';
+import { transformMessages, type TerseLevel } from '../lib/transform-messages.js';
 
 export const proxyRouter = Router();
 
@@ -313,7 +314,7 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
   }
 
   const { model: requestedModel, temperature, max_tokens, top_p, stream, tools, tool_choice, parallel_tool_calls } = parsed.data;
-  const messages: ChatMessage[] = parsed.data.messages.map((m): ChatMessage => {
+  let messages: ChatMessage[] = parsed.data.messages.map((m): ChatMessage => {
     if (m.role === 'assistant') {
       const hasToolCalls = (m.tool_calls?.length ?? 0) > 0;
       // With tool_calls, content: null is the correct OpenAI shape — keep it.
@@ -353,6 +354,12 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
       ...(m.name ? { name: m.name } : {}),
     };
   });
+
+  // Per-key transforms (RTK token-saver / terse mode) before estimation + routing.
+  messages = transformMessages(messages, {
+    tokenSaver: keyCtx.tokenSaver, terseMode: keyCtx.terseMode,
+    terseLevel: (keyCtx.terseLevel ?? undefined) as TerseLevel | undefined,
+  }).messages;
 
   // Token estimation is intentionally a heuristic (~4 chars per token). Used
   // for routing decisions (skip a model whose budget is too small) and for

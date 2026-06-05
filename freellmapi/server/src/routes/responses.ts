@@ -13,6 +13,7 @@ import { recordRequest, recordTokens, setCooldown, getCooldownDurationForLimit }
 import { checkQuota, bumpQuota } from '../services/quota.js';
 import { resolveClientKeyFull } from '../db/index.js';
 import { contentToString } from '../lib/content.js';
+import { transformMessages, type TerseLevel } from '../lib/transform-messages.js';
 import {
   isRetryableError,
   extractApiToken,
@@ -292,7 +293,10 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
   }
 
   const stream = reqData.stream ?? false;
-  const messages = toChatMessages(reqData);
+  const messages = transformMessages(toChatMessages(reqData), {
+    tokenSaver: keyCtx.tokenSaver, terseMode: keyCtx.terseMode,
+    terseLevel: (keyCtx.terseLevel ?? undefined) as TerseLevel | undefined,
+  }).messages;
   const tools = toChatTools(reqData.tools);
   const tool_choice = toChatToolChoice(reqData.tool_choice);
   const completionOpts = {

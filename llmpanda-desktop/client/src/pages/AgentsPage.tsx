@@ -18,6 +18,9 @@ interface ClientKey {
   name: string
   keyPrefix: string
   allowedModelIds: number[] | null
+  tokenSaver?: boolean
+  terseMode?: boolean
+  terseLevel?: string | null
   lastUsedAt: string | null
   revokedAt: string | null
   createdAt: string
@@ -148,6 +151,26 @@ function bestCodingIds(models: ModelRow[], cap = 12): number[] {
   return [...pool].sort((a, b) => a.intelligenceRank - b.intelligenceRank).slice(0, cap).map(m => m.id)
 }
 
+function PrefToggle({ label, hint, on, busy, onToggle }: { label: string; hint: string; on: boolean; busy?: boolean; onToggle: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2">
+      <div className="min-w-0">
+        <div className="text-xs font-medium text-white">{label}</div>
+        <div className="text-[11px] text-muted-foreground">{hint}</div>
+      </div>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={onToggle}
+        aria-pressed={on}
+        className={['relative h-5 w-9 shrink-0 rounded-full transition-colors', on ? 'bg-[#5fb13a]' : 'bg-white/15'].join(' ')}
+      >
+        <span className={['absolute top-0.5 size-4 rounded-full bg-white transition-all', on ? 'left-[18px]' : 'left-0.5'].join(' ')} />
+      </button>
+    </div>
+  )
+}
+
 // ── Coding Agents key + model picker ────────────────────────────────────────
 function KeyAndModels({ codingKey, plaintext, onPlaintext }: {
   codingKey: ClientKey | undefined
@@ -170,6 +193,11 @@ function KeyAndModels({ codingKey, plaintext, onPlaintext }: {
   })
   const saveModels = useMutation({
     mutationFn: (ids: number[]) => apiFetch(`/api/settings/clients/${codingKey!.id}`, { method: 'PATCH', body: JSON.stringify({ allowedModelIds: ids }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['client-keys'] }),
+  })
+  const savePrefs = useMutation({
+    mutationFn: (prefs: { tokenSaver?: boolean; terseMode?: boolean; terseLevel?: string }) =>
+      apiFetch(`/api/settings/clients/${codingKey!.id}`, { method: 'PATCH', body: JSON.stringify(prefs) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['client-keys'] }),
   })
 
@@ -260,6 +288,42 @@ function KeyAndModels({ codingKey, plaintext, onPlaintext }: {
                 )
               })}
             </div>
+          </div>
+
+          {/* request transforms — token & response savers */}
+          <div className="mt-5 border-t pt-4">
+            <h3 className="font-display text-xs font-bold uppercase tracking-wide">Token &amp; response savers</h3>
+            <p className="mt-0.5 mb-1 text-[11px] text-muted-foreground">Cut tokens on your coding agents. Optional, off by default.</p>
+            <PrefToggle
+              label="Token saver"
+              hint="Compress bulky tool output (git diff / grep / ls) before sending — 20-40% fewer input tokens."
+              on={!!codingKey.tokenSaver}
+              busy={savePrefs.isPending}
+              onToggle={() => savePrefs.mutate({ tokenSaver: !codingKey.tokenSaver })}
+            />
+            <PrefToggle
+              label="Terse mode"
+              hint="Inject a brevity prompt so the model answers shorter — fewer output tokens."
+              on={!!codingKey.terseMode}
+              busy={savePrefs.isPending}
+              onToggle={() => savePrefs.mutate({ terseMode: !codingKey.terseMode })}
+            />
+            {codingKey.terseMode && (
+              <div className="mt-2 flex items-center gap-2 pl-1">
+                <span className="text-[11px] text-muted-foreground">Level</span>
+                {(['lite', 'full', 'ultra'] as const).map(lv => (
+                  <button
+                    key={lv}
+                    type="button"
+                    onClick={() => savePrefs.mutate({ terseLevel: lv })}
+                    className={['rounded-full border px-3 py-1 text-[11px] uppercase tracking-wide transition-colors',
+                      (codingKey.terseLevel ?? 'full') === lv ? 'border-[#5fb13a] bg-[#5fb13a] text-[#191919]' : 'border-white/15 text-white/60 hover:border-white/30'].join(' ')}
+                  >
+                    {lv}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </>
       ) : (

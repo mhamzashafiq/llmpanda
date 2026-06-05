@@ -171,12 +171,19 @@ function parseAllowedModelIds(raw: string | null): number[] | null {
  * org is the ONLY org whose provider keys, fallback chain and quotas serve the
  * call, and `allowedModelIds` (when set) restricts routing to those models.
  */
-export async function resolveClientKeyFull(
-  token: string,
-): Promise<{ orgId: number; keyId: number; allowedModelIds: number[] | null } | null> {
+export interface ClientKeyContext {
+  orgId: number;
+  keyId: number;
+  allowedModelIds: number[] | null;
+  tokenSaver: boolean;
+  terseMode: boolean;
+  terseLevel: string | null;
+}
+
+export async function resolveClientKeyFull(token: string): Promise<ClientKeyContext | null> {
   if (!token) return null;
-  const rows = await sql<{ id: number; org_id: number; allowed_model_ids: string | null }[]>`
-    SELECT id, org_id, allowed_model_ids FROM api_clients
+  const rows = await sql<{ id: number; org_id: number; allowed_model_ids: string | null; token_saver: number; terse_mode: number; terse_level: string | null }[]>`
+    SELECT id, org_id, allowed_model_ids, token_saver, terse_mode, terse_level FROM api_clients
     WHERE key_hash = ${sha256hex(token)} AND revoked_at IS NULL`;
   if (rows[0]) {
     // best-effort usage stamp; never block the request on it
@@ -185,10 +192,13 @@ export async function resolveClientKeyFull(
       orgId: rows[0].org_id,
       keyId: rows[0].id,
       allowedModelIds: parseAllowedModelIds(rows[0].allowed_model_ids),
+      tokenSaver: rows[0].token_saver === 1,
+      terseMode: rows[0].terse_mode === 1,
+      terseLevel: rows[0].terse_level,
     };
   }
   const orgId = await resolveOrgByUnifiedKey(token);
-  return orgId === null ? null : { orgId, keyId: 0, allowedModelIds: null };
+  return orgId === null ? null : { orgId, keyId: 0, allowedModelIds: null, tokenSaver: false, terseMode: false, terseLevel: null };
 }
 
 /**
@@ -223,34 +233,29 @@ export async function createClientKey(
 export async function updateClientKey(
   orgId: number,
   id: number,
-  patch: { name?: string; allowedModelIds?: number[] | null },
+  patch: { name?: string; allowedModelIds?: number[] | null; tokenSaver?: boolean; terseMode?: boolean; terseLevel?: string | null },
 ): Promise<boolean> {
-  const setName = patch.name !== undefined;
-  const setAllowed = patch.allowedModelIds !== undefined;
-  if (!setName && !setAllowed) return false;
-  const allowed = patch.allowedModelIds && patch.allowedModelIds.length > 0
-    ? JSON.stringify(patch.allowedModelIds)
-    : null;
-  if (setName && setAllowed) {
-    const res = await sql`UPDATE api_clients SET name = ${patch.name!}, allowed_model_ids = ${allowed}
-      WHERE id = ${id} AND org_id = ${orgId}`;
-    return res.count > 0;
+  const set: Record<string, unknown> = {};
+  if (patch.name !== undefined) set.name = patch.name;
+  if (patch.allowedModelIds !== undefined) {
+    set.allowed_model_ids = patch.allowedModelIds && patch.allowedModelIds.length > 0 ? JSON.stringify(patch.allowedModelIds) : null;
   }
-  if (setName) {
-    const res = await sql`UPDATE api_clients SET name = ${patch.name!} WHERE id = ${id} AND org_id = ${orgId}`;
-    return res.count > 0;
-  }
-  const res = await sql`UPDATE api_clients SET allowed_model_ids = ${allowed} WHERE id = ${id} AND org_id = ${orgId}`;
+  if (patch.tokenSaver !== undefined) set.token_saver = patch.tokenSaver ? 1 : 0;
+  if (patch.terseMode !== undefined) set.terse_mode = patch.terseMode ? 1 : 0;
+  if (patch.terseLevel !== undefined) set.terse_level = patch.terseLevel;
+  if (Object.keys(set).length === 0) return false;
+  const res = await sql`UPDATE api_clients SET ${sql(set)} WHERE id = ${id} AND org_id = ${orgId}`;
   return res.count > 0;
 }
 
 /** List an org's client keys (metadata only — never the hash or plaintext). */
-export async function listClientKeys(orgId: number): Promise<Array<{ id: number; name: string; keyPrefix: string; allowedModelIds: number[] | null; lastUsedAt: string | null; revokedAt: string | null; createdAt: string }>> {
+export async function listClientKeys(orgId: number): Promise<Array<{ id: number; name: string; keyPrefix: string; allowedModelIds: number[] | null; tokenSaver: boolean; terseMode: boolean; terseLevel: string | null; lastUsedAt: string | null; revokedAt: string | null; createdAt: string }>> {
   const rows = await sql<any[]>`
     SELECT id, name, key_prefix AS "keyPrefix", allowed_model_ids AS "allowedModelIds",
+           token_saver AS "tokenSaver", terse_mode AS "terseMode", terse_level AS "terseLevel",
            last_used_at AS "lastUsedAt", revoked_at AS "revokedAt", created_at AS "createdAt"
     FROM api_clients WHERE org_id = ${orgId} ORDER BY created_at ASC`;
-  return rows.map(r => ({ ...r, allowedModelIds: parseAllowedModelIds(r.allowedModelIds) }));
+  return rows.map(r => ({ ...r, allowedModelIds: parseAllowedModelIds(r.allowedModelIds), tokenSaver: r.tokenSaver === 1, terseMode: r.terseMode === 1 }));
 }
 
 /** Revoke one client key (scoped to the org). Returns true if a row changed. */
