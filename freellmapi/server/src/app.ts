@@ -16,6 +16,7 @@ import { healthRouter } from './routes/health.js';
 import { settingsRouter } from './routes/settings.js';
 import { authRouter } from './routes/auth.js';
 import { accountRouter } from './routes/account.js';
+import { connectionsRouter } from './routes/connections.js';
 import { billingRouter, stripeWebhookRouter } from './routes/billing.js';
 import { requireAuth } from './middleware/requireAuth.js';
 import { createProxyRateLimiter, createAuthRateLimiter } from './middleware/rateLimit.js';
@@ -114,6 +115,7 @@ export function createApp() {
   app.use('/api/health', requireAuth, healthRouter);
   app.use('/api/settings', requireAuth, settingsRouter);
   app.use('/api/account', requireAuth, accountRouter);
+  app.use('/api/connections', requireAuth, connectionsRouter);
   app.use('/api/billing', requireAuth, billingRouter);
 
   // OpenAI-compatible proxy. Per-IP rate limiting (#35 item #6) runs first so

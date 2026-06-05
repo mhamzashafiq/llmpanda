@@ -316,6 +316,61 @@ export async function revokeClientKey(orgId: number, id: number): Promise<boolea
   return res.count > 0;
 }
 
+// ── P4: OAuth provider connections (Kiro / Copilot / Cursor / Qoder) ──────────
+// The token bundle (access/refresh tokens + client creds) is sealed under the
+// org DEK; only metadata is ever listed.
+
+export interface ConnectionSecret {
+  accessToken?: string;
+  refreshToken?: string;
+  clientId?: string;
+  clientSecret?: string;
+  region?: string;
+  startUrl?: string;
+  [k: string]: unknown;
+}
+
+export async function saveProviderConnection(orgId: number, c: {
+  provider: string; authType: string; email?: string | null; label?: string | null;
+  secret: ConnectionSecret; expiresAt?: Date | null;
+}): Promise<number> {
+  const sealed = await encryptForOrg(orgId, JSON.stringify(c.secret));
+  const [row] = await sql<{ id: number }[]>`
+    INSERT INTO provider_connections (org_id, provider, auth_type, email, label, secret_enc, secret_iv, secret_tag, expires_at, enabled)
+    VALUES (${orgId}, ${c.provider}, ${c.authType}, ${c.email ?? null}, ${c.label ?? null},
+            ${sealed.encrypted}, ${sealed.iv}, ${sealed.authTag}, ${c.expiresAt ?? null}, 1)
+    RETURNING id`;
+  return row.id;
+}
+
+export async function listProviderConnections(orgId: number): Promise<Array<{ id: number; provider: string; authType: string; email: string | null; label: string | null; expiresAt: string | null; enabled: boolean; createdAt: string }>> {
+  const rows = await sql<any[]>`
+    SELECT id, provider, auth_type AS "authType", email, label, expires_at AS "expiresAt",
+           enabled, created_at AS "createdAt"
+    FROM provider_connections WHERE org_id = ${orgId} ORDER BY created_at DESC`;
+  return rows.map(r => ({ ...r, enabled: r.enabled === 1 }));
+}
+
+export async function setProviderConnectionEnabled(orgId: number, id: number, enabled: boolean): Promise<boolean> {
+  const res = await sql`UPDATE provider_connections SET enabled = ${enabled ? 1 : 0} WHERE id = ${id} AND org_id = ${orgId}`;
+  return res.count > 0;
+}
+
+export async function deleteProviderConnection(orgId: number, id: number): Promise<boolean> {
+  const res = await sql`DELETE FROM provider_connections WHERE id = ${id} AND org_id = ${orgId}`;
+  return res.count > 0;
+}
+
+/** Decrypt one connection's secret bundle (for the provider adapter + refresh). */
+export async function getProviderConnectionSecret(orgId: number, id: number): Promise<{ provider: string; authType: string; secret: ConnectionSecret } | null> {
+  const rows = await sql<{ provider: string; auth_type: string; secret_enc: string; secret_iv: string; secret_tag: string }[]>`
+    SELECT provider, auth_type, secret_enc, secret_iv, secret_tag FROM provider_connections
+    WHERE id = ${id} AND org_id = ${orgId} AND enabled = 1`;
+  if (!rows[0]) return null;
+  const plain = await decryptForOrg(orgId, rows[0].secret_enc, rows[0].secret_iv, rows[0].secret_tag);
+  return { provider: rows[0].provider, authType: rows[0].auth_type, secret: JSON.parse(plain) as ConnectionSecret };
+}
+
 // Generic key/value settings accessors (routing strategy, etc.).
 export async function getSetting(key: string): Promise<string | undefined> {
   const rows = await sql<{ value: string }[]>`SELECT value FROM settings WHERE key = ${key}`;

@@ -233,6 +233,29 @@ export const apiClients = pgTable(
   }),
 )
 
+// P4: OAuth-based provider connections (Kiro / Copilot / Cursor / Qoder). Stores
+// the OAuth token bundle ENCRYPTED under the org DEK (secret_enc/iv/tag). These
+// proxy another service's account — opt-in, off the default route; see the in-UI
+// ToS warning. enabled=0 by default until the user explicitly turns it on.
+export const providerConnections = pgTable(
+  'provider_connections',
+  {
+    id: serial('id').primaryKey(),
+    orgId: integer('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull(),     // 'kiro' | 'copilot' | 'cursor' | 'qoder'
+    authType: text('auth_type').notNull(),    // 'builder-id' | 'idc' | 'google' | 'github' | 'import'
+    email: text('email'),
+    label: text('label'),
+    secretEnc: text('secret_enc').notNull(),
+    secretIv: text('secret_iv').notNull(),
+    secretTag: text('secret_tag').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    enabled: integer('enabled').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  t => ({ orgIdx: index('idx_provider_connections_org').on(t.orgId) }),
+)
+
 export const memberships = pgTable(
   'memberships',
   {

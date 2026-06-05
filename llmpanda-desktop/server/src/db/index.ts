@@ -58,6 +58,13 @@ async function ensureColumns(): Promise<void> {
   await sql`ALTER TABLE api_clients ADD COLUMN IF NOT EXISTS token_saver integer NOT NULL DEFAULT 0`;
   await sql`ALTER TABLE api_clients ADD COLUMN IF NOT EXISTS terse_mode integer NOT NULL DEFAULT 0`;
   await sql`ALTER TABLE api_clients ADD COLUMN IF NOT EXISTS terse_level text`;
+  await sql`CREATE TABLE IF NOT EXISTS provider_connections (
+    id serial PRIMARY KEY,
+    org_id integer NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    provider text NOT NULL, auth_type text NOT NULL, email text, label text,
+    secret_enc text NOT NULL, secret_iv text NOT NULL, secret_tag text NOT NULL,
+    expires_at timestamptz, enabled integer NOT NULL DEFAULT 0,
+    created_at timestamptz NOT NULL DEFAULT now())`;
 }
 
 // LOCAL_MODE: create the one local user + org on first run (no login, ever).
@@ -339,6 +346,57 @@ export async function listClientKeys(orgId: number): Promise<Array<{ id: number;
 export async function revokeClientKey(orgId: number, id: number): Promise<boolean> {
   const res = await sql`UPDATE api_clients SET revoked_at = now() WHERE id = ${id} AND org_id = ${orgId} AND revoked_at IS NULL`;
   return res.count > 0;
+}
+
+// ── P4: OAuth provider connections (Kiro / Copilot / Cursor / Qoder) ──────────
+export interface ConnectionSecret {
+  accessToken?: string;
+  refreshToken?: string;
+  clientId?: string;
+  clientSecret?: string;
+  region?: string;
+  startUrl?: string;
+  [k: string]: unknown;
+}
+
+export async function saveProviderConnection(orgId: number, c: {
+  provider: string; authType: string; email?: string | null; label?: string | null;
+  secret: ConnectionSecret; expiresAt?: Date | null;
+}): Promise<number> {
+  const sealed = await encryptForOrg(orgId, JSON.stringify(c.secret));
+  const [row] = await sql<{ id: number }[]>`
+    INSERT INTO provider_connections (org_id, provider, auth_type, email, label, secret_enc, secret_iv, secret_tag, expires_at, enabled)
+    VALUES (${orgId}, ${c.provider}, ${c.authType}, ${c.email ?? null}, ${c.label ?? null},
+            ${sealed.encrypted}, ${sealed.iv}, ${sealed.authTag}, ${c.expiresAt ?? null}, 1)
+    RETURNING id`;
+  return row.id;
+}
+
+export async function listProviderConnections(orgId: number): Promise<Array<{ id: number; provider: string; authType: string; email: string | null; label: string | null; expiresAt: string | null; enabled: boolean; createdAt: string }>> {
+  const rows = await sql<any[]>`
+    SELECT id, provider, auth_type AS "authType", email, label, expires_at AS "expiresAt",
+           enabled, created_at AS "createdAt"
+    FROM provider_connections WHERE org_id = ${orgId} ORDER BY created_at DESC`;
+  return rows.map(r => ({ ...r, enabled: r.enabled === 1 }));
+}
+
+export async function setProviderConnectionEnabled(orgId: number, id: number, enabled: boolean): Promise<boolean> {
+  const res = await sql`UPDATE provider_connections SET enabled = ${enabled ? 1 : 0} WHERE id = ${id} AND org_id = ${orgId}`;
+  return res.count > 0;
+}
+
+export async function deleteProviderConnection(orgId: number, id: number): Promise<boolean> {
+  const res = await sql`DELETE FROM provider_connections WHERE id = ${id} AND org_id = ${orgId}`;
+  return res.count > 0;
+}
+
+export async function getProviderConnectionSecret(orgId: number, id: number): Promise<{ provider: string; authType: string; secret: ConnectionSecret } | null> {
+  const rows = await sql<{ provider: string; auth_type: string; secret_enc: string; secret_iv: string; secret_tag: string }[]>`
+    SELECT provider, auth_type, secret_enc, secret_iv, secret_tag FROM provider_connections
+    WHERE id = ${id} AND org_id = ${orgId} AND enabled = 1`;
+  if (!rows[0]) return null;
+  const plain = await decryptForOrg(orgId, rows[0].secret_enc, rows[0].secret_iv, rows[0].secret_tag);
+  return { provider: rows[0].provider, authType: rows[0].auth_type, secret: JSON.parse(plain) as ConnectionSecret };
 }
 
 // Generic key/value settings accessors (routing strategy, etc.).
