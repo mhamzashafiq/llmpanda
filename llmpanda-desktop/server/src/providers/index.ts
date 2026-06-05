@@ -5,6 +5,7 @@ import { OpenAICompatProvider } from './openai-compat.js';
 import { CohereProvider } from './cohere.js';
 import { CloudflareProvider } from './cloudflare.js';
 import { VertexProvider } from './vertex.js';
+import { KiroProvider } from './kiro.js';
 
 const providers = new Map<Platform, BaseProvider>();
 
@@ -200,6 +201,10 @@ register(new OpenAICompatProvider({
 
 // Google Vertex AI — service-account JSON key, OAuth token minted per request.
 register(new VertexProvider());
+
+// Kiro (AWS CodeWhisperer) — credential is an OAuth connection (provider_connections),
+// resolved by the router; opt-in, off the default route.
+register(new KiroProvider());
 
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()
 // behave — but the real instance is built per-key by resolveProvider(), since

@@ -1,6 +1,7 @@
 import { getSetting, setSetting } from '../db/index.js';
 import { sql } from '../db/client.js';
 import { getProvider, resolveProvider, isKeylessPlatform } from '../providers/index.js';
+import { getKiroAccessToken } from './kiro-connection.js';
 import { decryptForOrg } from '../lib/crypto.js';
 import { canMakeRequest, canUseTokens, isOnCooldown } from './ratelimit.js';
 import {
@@ -322,6 +323,29 @@ export async function routeRequest(
       WHERE platform = ${entry.platform} AND enabled = 1 AND status IN ('healthy', 'unknown') AND org_id = ${orgId}`;
 
     const limits = { rpm: entry.rpm_limit, rpd: entry.rpd_limit, tpm: entry.tpm_limit, tpd: entry.tpd_limit };
+
+    // Connection-credential providers (Kiro): the credential is an OAuth token in
+    // provider_connections, not an api_keys row. Resolve it (refresh if needed).
+    // No enabled connection → skip Kiro entirely (non-connected orgs unaffected).
+    if (entry.platform === 'kiro') {
+      const conn = await getKiroAccessToken(orgId);
+      if (!conn) continue;
+      if (skipKeys?.has(`${entry.platform}:${entry.model_id}:${conn.connId}`)) continue;
+      if (await isOnCooldown(orgId, entry.platform, entry.model_id, conn.connId)) continue;
+      if (!(await canMakeRequest(orgId, entry.platform, entry.model_id, conn.connId, limits))) continue;
+      if (!(await canUseTokens(orgId, entry.platform, entry.model_id, conn.connId, estimatedTokens, limits))) continue;
+      return {
+        provider,
+        modelId: entry.model_id,
+        modelDbId: entry.model_db_id,
+        apiKey: conn.token,
+        keyId: conn.connId,
+        platform: entry.platform,
+        displayName: entry.display_name,
+        rpdLimit: limits.rpd,
+        tpdLimit: limits.tpd,
+      };
+    }
 
     // Keyless free tier: if the org has no key for an anonymous-capable provider,
     // route it without a key (keyId 0 sentinel) so the free no-key models work as

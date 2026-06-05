@@ -164,6 +164,8 @@ const NEW_PROVIDER_MODELS: Array<{ platform: string; model_id: string; display_n
   { platform: 'modelscope', model_id: 'Qwen/Qwen3-Coder-480B-A35B-Instruct', display_name: 'Qwen3 Coder 480B (ModelScope)', intelligence_rank: 2, speed_rank: 6, size_label: 'Frontier', context_window: 262144 },
   { platform: 'vertex', model_id: 'google/gemini-2.5-pro', display_name: 'Gemini 2.5 Pro (Vertex)', intelligence_rank: 1, speed_rank: 7, size_label: 'Frontier', context_window: 1048576 },
   { platform: 'vertex', model_id: 'google/gemini-2.5-flash', display_name: 'Gemini 2.5 Flash (Vertex)', intelligence_rank: 3, speed_rank: 3, size_label: 'Large', context_window: 1048576 },
+  { platform: 'kiro', model_id: 'claude-sonnet-4.5', display_name: 'Claude Sonnet 4.5 (Kiro)', intelligence_rank: 1, speed_rank: 5, size_label: 'Frontier', context_window: 200000 },
+  { platform: 'kiro', model_id: 'claude-haiku-4.5', display_name: 'Claude Haiku 4.5 (Kiro)', intelligence_rank: 3, speed_rank: 2, size_label: 'Large', context_window: 200000 },
 ];
 
 async function ensureProviderModels(): Promise<void> {
