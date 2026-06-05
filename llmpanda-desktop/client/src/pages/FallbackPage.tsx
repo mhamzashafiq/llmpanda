@@ -242,7 +242,7 @@ function Gauge({ label, used, limit }: { label: string; used: number; limit: num
         <span className="uppercase tracking-wide text-muted-foreground">{label}</span>
         <span className="font-mono text-muted-foreground">{used}{limit ? `/${limit}` : ''}</span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div className="h-full rounded-full" style={{ width: `${limit ? pct : 0}%`, backgroundColor: color }} />
       </div>
     </div>
@@ -261,7 +261,7 @@ function UsageGauges() {
       <h2 className="mb-4 font-display text-sm font-bold uppercase tracking-wide">Live rate-limit usage</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {data.map(u => (
-          <div key={`${u.platform}:${u.modelId}:${u.keyId}`} className="rounded-xl border border-white/10 p-4">
+          <div key={`${u.platform}:${u.modelId}:${u.keyId}`} className="rounded-xl border border-border p-4">
             <div className="mb-3 min-w-0">
               <div className="truncate text-sm font-medium">{u.displayName}</div>
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{u.platform} · {u.keyLabel}</div>

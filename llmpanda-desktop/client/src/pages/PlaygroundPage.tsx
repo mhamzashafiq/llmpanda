@@ -213,19 +213,19 @@ export default function PlaygroundPage() {
     : availableModels.find(m => m.modelId === selectedModel)?.displayName ?? selectedModel
 
   return (
-    <div className="apex flex h-[calc(100dvh-8.5rem)] flex-col text-white sm:h-[calc(100dvh-7rem)]">
+    <div className="apex flex h-[calc(100dvh-8.5rem)] flex-col text-foreground sm:h-[calc(100dvh-7rem)]">
       {/* header */}
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <SectionHeader label="Playground" icon={<ChatIcon />} tone="dark" />
           <h1 className="mt-4 font-display text-3xl font-bold uppercase leading-tight sm:text-4xl">Playground</h1>
-          <p className="mt-2 text-sm text-white/50">
+          <p className="mt-2 text-sm text-muted-foreground">
             Chat or attach an image — the router picks the model (vision when an image is sent).
           </p>
         </div>
         <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
           <Select value={selectedModel} onValueChange={(v) => setSelectedModel(v ?? 'auto')}>
-            <SelectTrigger className="w-full rounded-full border-white/15 bg-[#272727] text-xs uppercase tracking-wide text-white sm:w-[240px]">
+            <SelectTrigger className="w-full rounded-full border-border bg-card text-xs uppercase tracking-wide text-foreground sm:w-[240px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -247,16 +247,16 @@ export default function PlaygroundPage() {
       </div>
 
       {/* chat panel */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#272727]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card">
         <div className="flex-1 space-y-4 overflow-y-auto p-6">
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center text-center">
               <div className="max-w-sm space-y-3">
-                <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-white/5 text-[#5fb13a]">
+                <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-muted text-[#5fb13a]">
                   <ChatIcon />
                 </span>
                 <p className="font-display text-lg font-bold uppercase">Send a message to get started</p>
-                <p className="text-sm text-white/50">
+                <p className="text-sm text-muted-foreground">
                   Using <span className="text-[#5fb13a]">{activeModelLabel}</span>. Attach an image with the clip button to analyze it.
                 </p>
               </div>
@@ -265,7 +265,7 @@ export default function PlaygroundPage() {
             <>
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#5fb13a] text-[#191919]' : 'bg-white/5 text-white'}`}>
+                  <div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#5fb13a] text-[#191919]' : 'bg-muted text-foreground'}`}>
                     {msg.images?.length ? (
                       <div className="mb-2 flex flex-wrap gap-2">
                         {msg.images.map((src, k) => (
@@ -279,7 +279,7 @@ export default function PlaygroundPage() {
                       ? <Markdown>{msg.content}</Markdown>
                       : <div className="whitespace-pre-wrap">{msg.content}</div>)}
                     {msg.meta && (
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] tabular-nums text-white/50">
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] tabular-nums text-muted-foreground">
                         <StatusDot status="healthy" className="size-1.5" />
                         {msg.meta.platform && <span className="uppercase tracking-wide">{msg.meta.platform}</span>}
                         {msg.meta.model && <span className="font-mono">· {msg.meta.model}</span>}
@@ -294,7 +294,7 @@ export default function PlaygroundPage() {
               ))}
               {loading && (
                 <div className="flex justify-start">
-                  <div className="rounded-2xl bg-white/5 px-4 py-3">
+                  <div className="rounded-2xl bg-muted px-4 py-3">
                     <div className="flex gap-1">
                       <span className="size-1.5 animate-bounce rounded-full bg-[#5fb13a]" style={{ animationDelay: '0ms' }} />
                       <span className="size-1.5 animate-bounce rounded-full bg-[#5fb13a]" style={{ animationDelay: '150ms' }} />
@@ -310,7 +310,7 @@ export default function PlaygroundPage() {
 
         {/* composer */}
         <div
-          className="border-t border-white/10 bg-[#191919]/40 p-3"
+          className="border-t border-border bg-background/40 p-3"
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files) }}
         >
@@ -318,10 +318,10 @@ export default function PlaygroundPage() {
             <div className="mb-2 flex flex-wrap gap-2">
               {attachments.map((src, k) => (
                 <div key={k} className="relative">
-                  <img src={src} alt="" className="size-14 rounded-lg border border-white/10 object-cover" />
+                  <img src={src} alt="" className="size-14 rounded-lg border border-border object-cover" />
                   <button
                     onClick={() => setAttachments(prev => prev.filter((_, j) => j !== k))}
-                    className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-[#191919] text-xs text-white ring-1 ring-white/20"
+                    className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-background text-xs text-foreground ring-1 ring-border"
                   >×</button>
                 </div>
               ))}
@@ -333,7 +333,7 @@ export default function PlaygroundPage() {
             <button
               onClick={() => fileRef.current?.click()}
               title={hasVisionModel ? 'Attach image' : 'Attach image (enable a vision model first)'}
-              className="mb-0.5 flex size-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[#272727] text-white/70 transition-colors hover:border-[#5fb13a] hover:text-[#5fb13a]"
+              className="mb-0.5 flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:border-[#5fb13a] hover:text-[#5fb13a]"
             ><PaperclipIcon /></button>
             <textarea
               ref={inputRef}
@@ -342,7 +342,7 @@ export default function PlaygroundPage() {
               onKeyDown={handleKeyDown}
               placeholder="Type a message… (⏎ to send, ⇧⏎ for newline)"
               rows={1}
-              className="max-h-[160px] min-h-[44px] flex-1 resize-none rounded-xl border border-white/10 bg-[#272727] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-white/30 focus:border-[#5fb13a] focus:ring-2 focus:ring-[#5fb13a]/30"
+              className="max-h-[160px] min-h-[44px] flex-1 resize-none rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-[#5fb13a] focus:ring-2 focus:ring-[#5fb13a]/30"
               style={{ height: 'auto', overflow: 'hidden' }}
               onInput={e => { const el = e.target as HTMLTextAreaElement; el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px' }}
             />

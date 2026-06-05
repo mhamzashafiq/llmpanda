@@ -17,7 +17,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       className={cn(
         // apex inputs — matches the auth screens: tall, dark #272727, rounded-xl,
         // accent-green focus ring.
-        "h-11 w-full min-w-0 rounded-xl border border-white/10 bg-[#272727] px-4 py-2.5 text-sm text-white transition-colors outline-none placeholder:text-white/30 focus-visible:border-[#5fb13a] focus-visible:ring-2 focus-visible:ring-[#5fb13a]/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20",
+        "h-11 w-full min-w-0 rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-[#5fb13a] focus-visible:ring-2 focus-visible:ring-[#5fb13a]/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20",
         className
       )}
       {...props}

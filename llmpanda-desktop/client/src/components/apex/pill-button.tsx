@@ -48,7 +48,7 @@ export function PillButton({
   const variants: Record<PillVariant, string> = {
     accent: 'bg-[#1e6602] text-white hover:bg-[#27800a]',
     outline: 'bg-transparent border border-[#191919]/15 text-[#191919] hover:border-[#191919]',
-    outlineDark: 'bg-transparent border border-white/20 text-white hover:border-[#5fb13a] hover:text-[#5fb13a]',
+    outlineDark: 'bg-transparent border border-border text-foreground hover:border-[#5fb13a] hover:text-[#5fb13a]',
   }
 
   return (

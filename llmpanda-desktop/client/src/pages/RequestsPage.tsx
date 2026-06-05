@@ -99,7 +99,7 @@ export default function RequestsPage() {
                 const isOpen = open.has(r.id)
                 return (
                 <Fragment key={r.id}>
-                <tr onClick={() => toggle(r.id)} className="cursor-pointer border-b last:border-0 transition-colors hover:bg-white/5">
+                <tr onClick={() => toggle(r.id)} className="cursor-pointer border-b last:border-0 transition-colors hover:bg-muted">
                   <td className="whitespace-nowrap px-4 py-3 tabular-nums text-muted-foreground">
                     {new Date(r.createdAt + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </td>
@@ -117,22 +117,22 @@ export default function RequestsPage() {
                   <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{r.ttfbMs != null ? `${r.ttfbMs} ms` : '–'}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{r.inputTokens}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{r.outputTokens}</td>
-                  <td className="max-w-[280px] truncate px-4 py-3 text-xs text-white/60" title={r.prompt ?? ''}>{r.prompt ?? '—'}</td>
+                  <td className="max-w-[280px] truncate px-4 py-3 text-xs text-muted-foreground" title={r.prompt ?? ''}>{r.prompt ?? '—'}</td>
                   <td className="px-3 py-3 text-muted-foreground">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={`size-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
                   </td>
                 </tr>
                 {isOpen && (
-                  <tr className="border-b last:border-0 bg-[#191919]/60">
+                  <tr className="border-b last:border-0 bg-background/60">
                     <td colSpan={9} className="px-4 py-4">
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
                           <p className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Prompt</p>
-                          <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-white/10 bg-[#0d0d0d] p-3 text-xs text-white/80">{r.prompt ?? '—'}</pre>
+                          <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">{r.prompt ?? '—'}</pre>
                         </div>
                         <div>
                           <p className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Response</p>
-                          <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-white/10 bg-[#0d0d0d] p-3 text-xs text-white/80">{r.response ?? (r.error ? '' : '—')}</pre>
+                          <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border bg-background p-3 text-xs text-muted-foreground">{r.response ?? (r.error ? '' : '—')}</pre>
                         </div>
                       </div>
                       {r.error && (

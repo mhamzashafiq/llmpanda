@@ -45,7 +45,7 @@ const statusDot: Record<string, string> = {
   rate_limited: 'bg-[#f5a623]',
   invalid: 'bg-[#ff4d4f]',
   error: 'bg-[#ff4d4f]',
-  unknown: 'bg-white/30',
+  unknown: 'bg-muted-foreground/40',
 }
 
 const statusLabel: Record<string, string> = {

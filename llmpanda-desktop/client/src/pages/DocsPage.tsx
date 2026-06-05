@@ -85,7 +85,7 @@ function ProviderCard({ p }: { p: Provider }) {
           <h3 className="font-display text-sm font-bold uppercase tracking-wide">{p.name}</h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <span className="rounded-full bg-[#5fb13a]/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#5fb13a]">Free</span>
-            {p.noCard && <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/60">No card</span>}
+            {p.noCard && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">No card</span>}
             <span className="font-mono text-[10px] text-muted-foreground">platform: {p.platform}</span>
           </div>
         </div>
@@ -96,7 +96,7 @@ function ProviderCard({ p }: { p: Provider }) {
           Get key <ExternalIcon />
         </a>
       </div>
-      <ol className="mt-3 list-decimal space-y-1 pl-4 text-xs text-white/70 marker:text-[#5fb13a]">
+      <ol className="mt-3 list-decimal space-y-1 pl-4 text-xs text-muted-foreground marker:text-[#5fb13a]">
         {p.steps.map((s, i) => <li key={i}>{s}</li>)}
       </ol>
       <p className="mt-3 text-[11px] text-muted-foreground">{p.note}{p.prefix ? ` · key looks like ${p.prefix}` : ''}</p>
@@ -125,7 +125,7 @@ export default function DocsPage() {
           <h2 className="font-display text-sm font-bold uppercase tracking-wide">No key needed</h2>
           <p className="mt-1.5 text-xs text-muted-foreground">
             These run with <span className="text-[#5fb13a]">zero setup</span> — the router uses them automatically when you haven't added any key of your own:
-            <span className="ml-1 font-mono text-white/70">{KEYLESS.join(', ')}</span>. Best for trying things out (shared, rate-limited).
+            <span className="ml-1 font-mono text-muted-foreground">{KEYLESS.join(', ')}</span>. Best for trying things out (shared, rate-limited).
           </p>
         </section>
 
@@ -139,7 +139,7 @@ export default function DocsPage() {
 
         <section className="rounded-2xl border border-[#5fb13a]/30 bg-[#5fb13a]/[0.06] p-5">
           <h2 className="font-display text-sm font-bold uppercase tracking-wide text-[#5fb13a]">How to add a key</h2>
-          <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-white/70 marker:text-[#5fb13a]">
+          <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-muted-foreground marker:text-[#5fb13a]">
             <li>Copy the key from the provider above.</li>
             <li>Open the <a href="/keys" className="text-[#5fb13a] underline">Keys</a> page → “Add a provider key”.</li>
             <li>Pick the matching <span className="font-mono">platform</span>, paste the key, click <span className="uppercase">Add key</span>.</li>

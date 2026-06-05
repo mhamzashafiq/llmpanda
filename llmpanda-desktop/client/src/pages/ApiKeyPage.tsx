@@ -60,7 +60,7 @@ function UnifiedKeyCard() {
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <code className="flex-1 select-all truncate rounded-xl border border-white/10 bg-[#272727] px-3 py-2 font-mono text-xs tabular-nums">
+          <code className="flex-1 select-all truncate rounded-xl border border-border bg-card px-3 py-2 font-mono text-xs tabular-nums">
             {showKey ? apiKey : masked}
           </code>
           <Button variant="outline" size="sm" onClick={() => setShowKey(!showKey)}>{showKey ? 'Hide' : 'Show'}</Button>
@@ -147,7 +147,7 @@ function ClientKeysCard() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Key name (e.g. production, staging)"
-          className="flex-1 rounded-xl border border-white/10 bg-[#272727] px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#5fb13a] focus:ring-2 focus:ring-[#5fb13a]/30"
+          className="flex-1 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-[#5fb13a] focus:ring-2 focus:ring-[#5fb13a]/30"
         />
         <PillButton type="submit" label={create.isPending ? 'Creating…' : 'Create key'} disabled={!name.trim() || create.isPending} />
       </form>
@@ -210,7 +210,7 @@ function BackupCard() {
       <h2 className="font-display text-sm font-bold uppercase tracking-wide">{isDesktop ? 'Local data' : 'Your data'}</h2>
       <p className="mt-1.5 text-xs text-muted-foreground">
         {isDesktop
-          ? <>Download a complete backup of your local database — keys, models, logs, and settings — as one JSON file. Restoring also needs your <code className="text-white/70">encryption.key</code>.</>
+          ? <>Download a complete backup of your local database — keys, models, logs, and settings — as one JSON file. Restoring also needs your <code className="text-muted-foreground">encryption.key</code>.</>
           : <>Download a backup of your account data — provider keys (masked), client keys, models, fallback chain, recent request logs, and audit trail — as one JSON file.</>}
       </p>
       <div className="mt-4">
@@ -310,7 +310,7 @@ function IntegrationPromptCard({ baseUrl }: { baseUrl: string }) {
         </div>
         <button
           onClick={copy}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-medium uppercase tracking-wide text-white/70 transition-colors hover:border-[#5fb13a] hover:text-[#5fb13a]"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:border-[#5fb13a] hover:text-[#5fb13a]"
         >
           {copied ? (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-3.5 text-[#5fb13a]"><path d="M20 6 9 17l-5-5" /></svg>
@@ -320,7 +320,7 @@ function IntegrationPromptCard({ baseUrl }: { baseUrl: string }) {
           {copied ? 'Copied' : 'Copy prompt'}
         </button>
       </div>
-      <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-[#0d0d0d] p-4 text-[11px] leading-relaxed text-white/70">{prompt}</pre>
+      <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-background p-4 text-[11px] leading-relaxed text-muted-foreground">{prompt}</pre>
     </section>
   )
 }
@@ -347,7 +347,7 @@ function CodeBlock({ title, code }: { title: string; code: string }) {
         <span className="font-display text-xs font-bold uppercase tracking-wide">{title}</span>
         <button
           onClick={copy}
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-white/60 transition-colors hover:border-[#5fb13a] hover:text-[#5fb13a]"
+          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:border-[#5fb13a] hover:text-[#5fb13a]"
         >
           {copied ? (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-3.5 text-[#5fb13a]"><path d="M20 6 9 17l-5-5" /></svg>
@@ -359,7 +359,7 @@ function CodeBlock({ title, code }: { title: string; code: string }) {
       </div>
       {/* wrap long lines so each card shows the full snippet — no horizontal scroll */}
       <pre className="flex-1 whitespace-pre-wrap break-words p-4 text-[11px] leading-relaxed">
-        <code className="font-mono text-white/80">{code}</code>
+        <code className="font-mono text-muted-foreground">{code}</code>
       </pre>
     </div>
   )
