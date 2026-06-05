@@ -4,6 +4,7 @@ import { GoogleProvider } from './google.js';
 import { OpenAICompatProvider } from './openai-compat.js';
 import { CohereProvider } from './cohere.js';
 import { CloudflareProvider } from './cloudflare.js';
+import { VertexProvider } from './vertex.js';
 
 const providers = new Map<Platform, BaseProvider>();
 
@@ -196,6 +197,9 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://api-inference.modelscope.cn/v1',
   timeoutMs: 120000,
 }));
+
+// Google Vertex AI — service-account JSON key, OAuth token minted per request.
+register(new VertexProvider());
 
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()
 // behave — but the real instance is built per-key by resolveProvider(), since

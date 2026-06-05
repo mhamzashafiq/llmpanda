@@ -155,6 +155,8 @@ const NEW_PROVIDER_MODELS: Array<{ platform: string; model_id: string; display_n
   { platform: 'dashscope', model_id: 'qwen3-coder-plus', display_name: 'Qwen3 Coder Plus (DashScope)', intelligence_rank: 2, speed_rank: 5, size_label: 'Frontier', context_window: 1000000 },
   { platform: 'dashscope', model_id: 'qwen-max', display_name: 'Qwen Max (DashScope)', intelligence_rank: 4, speed_rank: 6, size_label: 'Large', context_window: 32768 },
   { platform: 'modelscope', model_id: 'Qwen/Qwen3-Coder-480B-A35B-Instruct', display_name: 'Qwen3 Coder 480B (ModelScope)', intelligence_rank: 2, speed_rank: 6, size_label: 'Frontier', context_window: 262144 },
+  { platform: 'vertex', model_id: 'google/gemini-2.5-pro', display_name: 'Gemini 2.5 Pro (Vertex)', intelligence_rank: 1, speed_rank: 7, size_label: 'Frontier', context_window: 1048576 },
+  { platform: 'vertex', model_id: 'google/gemini-2.5-flash', display_name: 'Gemini 2.5 Flash (Vertex)', intelligence_rank: 3, speed_rank: 3, size_label: 'Large', context_window: 1048576 },
 ];
 
 async function ensureProviderModels(): Promise<void> {
