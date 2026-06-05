@@ -65,7 +65,11 @@ const contentBlockSchema = z.union([
 ]);
 
 const messageSchema = z.object({
-  role: z.enum(['user', 'assistant']),
+  // The Anthropic API only allows user/assistant in `messages`, but some clients
+  // (incl. Claude Code against a custom endpoint) inline a `system` (or Responses
+  // -era `developer`) message here. Accept them and fold into a system message
+  // rather than 400-ing — more lenient than upstream, never less.
+  role: z.enum(['user', 'assistant', 'system', 'developer']),
   content: z.union([z.string(), z.array(contentBlockSchema)]),
 });
 
@@ -140,6 +144,13 @@ export function anthropicToChatMessages(req: AnthropicRequest): ChatMessage[] {
   }
 
   for (const m of req.messages) {
+    // Normalize an inline system/developer message to a system ChatMessage.
+    if (m.role === 'system' || m.role === 'developer') {
+      const sys = typeof m.content === 'string' ? m.content : blocksToText(m.content);
+      if (sys.length > 0) messages.push({ role: 'system', content: sys });
+      continue;
+    }
+
     if (typeof m.content === 'string') {
       messages.push({ role: m.role, content: m.content });
       continue;

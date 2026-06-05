@@ -35,6 +35,22 @@ describe('Anthropic → internal chat messages', () => {
     ]);
   });
 
+  it('folds an inline system/developer message in messages[] into a system message (Claude Code)', () => {
+    const parsed = anthropicMessagesSchema.safeParse({
+      max_tokens: 10,
+      messages: [
+        { role: 'user', content: 'hi' },
+        { role: 'system', content: 'You are a coding agent.' },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+    const msgs = anthropicToChatMessages(parsed.success ? parsed.data : ({} as AnthropicRequest));
+    expect(msgs).toEqual([
+      { role: 'user', content: 'hi' },
+      { role: 'system', content: 'You are a coding agent.' },
+    ]);
+  });
+
   it('prepends a string system prompt as a system message', () => {
     const msgs = anthropicToChatMessages(req({ system: 'You are terse.', messages: [{ role: 'user', content: 'hi' }] }));
     expect(msgs[0]).toEqual({ role: 'system', content: 'You are terse.' });
