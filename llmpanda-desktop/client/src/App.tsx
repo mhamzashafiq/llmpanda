@@ -13,6 +13,7 @@ import AnalyticsPage from '@/pages/AnalyticsPage'
 import RequestsPage from '@/pages/RequestsPage'
 import ApiKeyPage from '@/pages/ApiKeyPage'
 import DocsPage from '@/pages/DocsPage'
+import AgentsPage from '@/pages/AgentsPage'
 
 const queryClient = new QueryClient()
 
@@ -34,11 +35,13 @@ const ICONS: Record<string, ReactNode> = {
   logs: <svg {...iconProps}><path d="M4 6h16M4 12h16M4 18h10" /></svg>,
   apikey: <svg {...iconProps}><path d="M9 2v6M15 2v6M7 8h10v3a5 5 0 0 1-10 0zM12 16v6" /></svg>,
   docs: <svg {...iconProps}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>,
+  agents: <svg {...iconProps}><path d="M8 9l3 3-3 3M13 15h3M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" /></svg>,
 }
 
 const NAV = [
   { to: '/playground', label: 'Playground', key: 'playground' },
   { to: '/connect', label: 'API Key', key: 'apikey' },
+  { to: '/agents', label: 'Agents', key: 'agents' },
   { to: '/keys', label: 'Keys', key: 'keys' },
   { to: '/docs', label: 'Docs', key: 'docs' },
   { to: '/fallback', label: 'Fallback', key: 'fallback' },
@@ -178,6 +181,7 @@ function Layout() {
               <Route path="/" element={<Navigate to="/playground" replace />} />
               <Route path="/playground" element={<PlaygroundPage />} />
               <Route path="/connect" element={<ApiKeyPage />} />
+              <Route path="/agents" element={<AgentsPage />} />
               <Route path="/keys" element={<KeysPage />} />
               <Route path="/docs" element={<DocsPage />} />
               <Route path="/fallback" element={<FallbackPage />} />

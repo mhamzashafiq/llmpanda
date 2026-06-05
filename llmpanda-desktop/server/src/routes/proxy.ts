@@ -6,7 +6,7 @@ import type { ChatMessage } from '@freellmapi/shared/types.js';
 import { routeRequest, recordRateLimitHit, recordSuccess, hasEnabledVisionModel, type RouteResult } from '../services/router.js';
 import { recordRequest, recordTokens, setCooldown, getCooldownDurationForLimit } from '../services/ratelimit.js';
 import { checkQuota, bumpQuota } from '../services/quota.js';
-import { resolveOrgByClientKey } from '../db/index.js';
+import { resolveClientKeyFull } from '../db/index.js';
 import { sql } from '../db/client.js';
 import { contentToString, messageHasImage, normalizeOutboundContent } from '../lib/content.js';
 
@@ -276,13 +276,16 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
   // that org is the ONLY tenant whose provider keys / chain / quotas serve the
   // call — the tenant boundary for the entire proxy path.
   const token = extractApiToken(req);
-  const orgId = token ? await resolveOrgByClientKey(token) : null;
-  if (orgId === null) {
+  const keyCtx = token ? await resolveClientKeyFull(token) : null;
+  if (keyCtx === null) {
     res.status(401).json({
       error: { message: 'Invalid API key', type: 'authentication_error' },
     });
     return;
   }
+  const { orgId, allowedModelIds } = keyCtx;
+  // Per-key "Coding Agents" model allow-list (empty/null = unrestricted).
+  const allowedSet = allowedModelIds && allowedModelIds.length > 0 ? new Set(allowedModelIds) : undefined;
 
   // Per-org plan quota (Phase 4). Reject over-cap before doing any routing work.
   const quota = await checkQuota(orgId);
@@ -393,8 +396,13 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
     preferredModel = getStickyModel(messages);
   } else if (requestedModel) {
     const [enabled] = await sql<{ id: number }[]>`SELECT id FROM models WHERE model_id = ${requestedModel} AND enabled = 1`;
-    if (enabled) {
+    if (enabled && (!allowedSet || allowedSet.has(enabled.id))) {
       preferredModel = enabled.id;
+    } else if (enabled) {
+      // Model exists but isn't in this key's allow-list — route within the
+      // allowed set instead of 400-ing (coding agents send model names we
+      // restrict, and should still get a response from the chosen models).
+      preferredModel = getStickyModel(messages);
     } else {
       const [disabled] = await sql<{ id: number }[]>`SELECT id FROM models WHERE model_id = ${requestedModel}`;
       const reason = disabled ? 'is disabled' : 'is not in the catalog';
@@ -422,7 +430,7 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     let route: RouteResult;
     try {
-      route = await routeRequest(orgId, estimatedTotal, skipKeys.size > 0 ? skipKeys : undefined, preferredModel, hasImage);
+      route = await routeRequest(orgId, estimatedTotal, skipKeys.size > 0 ? skipKeys : undefined, preferredModel, hasImage, allowedSet);
     } catch (err: any) {
       // No more models available
       if (lastError) {

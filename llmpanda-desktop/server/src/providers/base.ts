@@ -15,6 +15,9 @@ export interface CompletionOptions {
   tools?: ChatToolDefinition[];
   tool_choice?: ChatToolChoice;
   parallel_tool_calls?: boolean;
+  // Stop sequences (OpenAI `stop` / Anthropic `stop_sequences`). Providers that
+  // support them forward verbatim; the rest ignore them.
+  stop?: string[];
 }
 
 export interface EmbeddingResponse {

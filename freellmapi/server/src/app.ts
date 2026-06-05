@@ -9,6 +9,7 @@ import { modelsRouter } from './routes/models.js';
 import { proxyRouter } from './routes/proxy.js';
 import { embeddingsRouter } from './routes/embeddings.js';
 import { responsesRouter } from './routes/responses.js';
+import { messagesRouter } from './routes/messages.js';
 import { fallbackRouter } from './routes/fallback.js';
 import { analyticsRouter } from './routes/analytics.js';
 import { healthRouter } from './routes/health.js';
@@ -123,6 +124,8 @@ export function createApp() {
   app.use('/v1/embeddings', embeddingsRouter);
   // OpenAI Responses API shim (Codex CLI requires wire_api="responses"; see #96)
   app.use('/v1', responsesRouter);
+  // Anthropic Messages API shim (Claude Code + any Anthropic-SDK client).
+  app.use('/v1', messagesRouter);
 
   // Health check
   app.get('/api/ping', (_req, res) => {

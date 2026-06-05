@@ -215,6 +215,9 @@ export const apiClients = pgTable(
     name: text('name').notNull().default('Default'),
     keyPrefix: text('key_prefix').notNull(),
     keyHash: text('key_hash').notNull().unique(),
+    // Optional JSON array of model db ids this key may route to (the "Coding
+    // Agents" allow-list). NULL / empty = no restriction (full org chain).
+    allowedModelIds: text('allowed_model_ids'),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

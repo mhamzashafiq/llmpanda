@@ -149,40 +149,108 @@ async function ensureDefaultClients(): Promise<void> {
   }
 }
 
+// Parse the api_clients.allowed_model_ids JSON column → number[] | null.
+// NULL / empty / malformed = no restriction.
+function parseAllowedModelIds(raw: string | null): number[] | null {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw);
+    if (!Array.isArray(v)) return null;
+    const ids = v.filter((n): n is number => typeof n === 'number');
+    return ids.length > 0 ? ids : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Resolve an incoming /v1 token to its owning org. Hashes the token and looks up
- * a non-revoked client key; falls back to the legacy unified_key. Touches
- * last_used_at. This is the tenant boundary for the proxy: the returned org is
- * the ONLY org whose provider keys, fallback chain and quotas may serve the call.
+ * Resolve an incoming /v1 token to the full client-key context: owning org, the
+ * client key id, and its model allow-list. Hashes the token, looks up a
+ * non-revoked client key, falls back to the legacy unified_key (no allow-list).
+ * Touches last_used_at. This is the tenant boundary for the proxy: the returned
+ * org is the ONLY org whose provider keys, fallback chain and quotas serve the
+ * call, and `allowedModelIds` (when set) restricts routing to those models.
  */
-export async function resolveOrgByClientKey(token: string): Promise<number | null> {
+export async function resolveClientKeyFull(
+  token: string,
+): Promise<{ orgId: number; keyId: number; allowedModelIds: number[] | null } | null> {
   if (!token) return null;
-  const rows = await sql<{ id: number; org_id: number }[]>`
-    SELECT id, org_id FROM api_clients WHERE key_hash = ${sha256hex(token)} AND revoked_at IS NULL`;
+  const rows = await sql<{ id: number; org_id: number; allowed_model_ids: string | null }[]>`
+    SELECT id, org_id, allowed_model_ids FROM api_clients
+    WHERE key_hash = ${sha256hex(token)} AND revoked_at IS NULL`;
   if (rows[0]) {
     // best-effort usage stamp; never block the request on it
     sql`UPDATE api_clients SET last_used_at = now() WHERE id = ${rows[0].id}`.catch(() => {});
-    return rows[0].org_id;
+    return {
+      orgId: rows[0].org_id,
+      keyId: rows[0].id,
+      allowedModelIds: parseAllowedModelIds(rows[0].allowed_model_ids),
+    };
   }
-  return resolveOrgByUnifiedKey(token);
+  const orgId = await resolveOrgByUnifiedKey(token);
+  return orgId === null ? null : { orgId, keyId: 0, allowedModelIds: null };
+}
+
+/**
+ * Backward-compatible resolver returning only the org id (used by callers that
+ * don't need the allow-list, e.g. the embeddings route).
+ */
+export async function resolveOrgByClientKey(token: string): Promise<number | null> {
+  const full = await resolveClientKeyFull(token);
+  return full ? full.orgId : null;
 }
 
 /** Create a new named client key for an org. Returns the plaintext ONCE. */
-export async function createClientKey(orgId: number, name: string): Promise<{ id: number; name: string; key: string; keyPrefix: string }> {
+export async function createClientKey(
+  orgId: number,
+  name: string,
+  allowedModelIds?: number[],
+): Promise<{ id: number; name: string; key: string; keyPrefix: string }> {
   const key = newUnifiedKey();
+  const allowed = allowedModelIds && allowedModelIds.length > 0 ? JSON.stringify(allowedModelIds) : null;
   const [row] = await sql<{ id: number }[]>`
-    INSERT INTO api_clients (org_id, name, key_prefix, key_hash)
-    VALUES (${orgId}, ${name || 'Untitled'}, ${keyPrefixOf(key)}, ${sha256hex(key)})
+    INSERT INTO api_clients (org_id, name, key_prefix, key_hash, allowed_model_ids)
+    VALUES (${orgId}, ${name || 'Untitled'}, ${keyPrefixOf(key)}, ${sha256hex(key)}, ${allowed})
     RETURNING id`;
   return { id: row.id, name: name || 'Untitled', key, keyPrefix: keyPrefixOf(key) };
 }
 
+/**
+ * Update a client key's name and/or model allow-list (org-scoped).
+ * `allowedModelIds: []` or `null` clears the restriction. Returns true if a row
+ * changed.
+ */
+export async function updateClientKey(
+  orgId: number,
+  id: number,
+  patch: { name?: string; allowedModelIds?: number[] | null },
+): Promise<boolean> {
+  const setName = patch.name !== undefined;
+  const setAllowed = patch.allowedModelIds !== undefined;
+  if (!setName && !setAllowed) return false;
+  const allowed = patch.allowedModelIds && patch.allowedModelIds.length > 0
+    ? JSON.stringify(patch.allowedModelIds)
+    : null;
+  if (setName && setAllowed) {
+    const res = await sql`UPDATE api_clients SET name = ${patch.name!}, allowed_model_ids = ${allowed}
+      WHERE id = ${id} AND org_id = ${orgId}`;
+    return res.count > 0;
+  }
+  if (setName) {
+    const res = await sql`UPDATE api_clients SET name = ${patch.name!} WHERE id = ${id} AND org_id = ${orgId}`;
+    return res.count > 0;
+  }
+  const res = await sql`UPDATE api_clients SET allowed_model_ids = ${allowed} WHERE id = ${id} AND org_id = ${orgId}`;
+  return res.count > 0;
+}
+
 /** List an org's client keys (metadata only — never the hash or plaintext). */
-export async function listClientKeys(orgId: number): Promise<Array<{ id: number; name: string; keyPrefix: string; lastUsedAt: string | null; revokedAt: string | null; createdAt: string }>> {
-  return await sql<any[]>`
-    SELECT id, name, key_prefix AS "keyPrefix", last_used_at AS "lastUsedAt",
-           revoked_at AS "revokedAt", created_at AS "createdAt"
+export async function listClientKeys(orgId: number): Promise<Array<{ id: number; name: string; keyPrefix: string; allowedModelIds: number[] | null; lastUsedAt: string | null; revokedAt: string | null; createdAt: string }>> {
+  const rows = await sql<any[]>`
+    SELECT id, name, key_prefix AS "keyPrefix", allowed_model_ids AS "allowedModelIds",
+           last_used_at AS "lastUsedAt", revoked_at AS "revokedAt", created_at AS "createdAt"
     FROM api_clients WHERE org_id = ${orgId} ORDER BY created_at ASC`;
+  return rows.map(r => ({ ...r, allowedModelIds: parseAllowedModelIds(r.allowedModelIds) }));
 }
 
 /** Revoke one client key (scoped to the org). Returns true if a row changed. */

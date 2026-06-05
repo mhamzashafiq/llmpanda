@@ -277,6 +277,7 @@ export async function routeRequest(
   skipKeys?: Set<string>,
   preferredModelDbId?: number,
   requireVision = false,
+  allowedModelIds?: Set<number>,
 ): Promise<RouteResult> {
   const strategy = await getRoutingStrategy(orgId);
   const statsMap = strategy !== 'priority' ? await refreshStatsCache(orgId) : new Map<string, ModelStats>();
@@ -292,7 +293,14 @@ export async function routeRequest(
     JOIN models m ON m.id = fc.model_db_id AND m.enabled = 1
     WHERE fc.enabled = 1 AND fc.org_id = ${orgId}`;
 
-  const sortedChain = orderChain([...chain], strategy, statsMap);
+  // Per-key "Coding Agents" allow-list: restrict routing to the chosen models.
+  // Empty/undefined = no restriction (the full org chain). Applies uniformly to
+  // keyed + keyless candidates and precedes the preferred-model promotion.
+  const restricted = allowedModelIds && allowedModelIds.size > 0
+    ? chain.filter(e => allowedModelIds.has(e.model_db_id))
+    : chain;
+
+  const sortedChain = orderChain([...restricted], strategy, statsMap);
 
   if (preferredModelDbId) {
     const idx = sortedChain.findIndex(e => e.model_db_id === preferredModelDbId);

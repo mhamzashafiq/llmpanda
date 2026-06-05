@@ -1,0 +1,11 @@
+{
+  "name": "llmpanda",
+  "version": "0.1.0",
+  "description": "Launch coding agents (Claude Code, Codex, Aider, Goose, OpenCode…) against your LLM Panda free-model proxy.",
+  "bin": { "llmpanda": "index.js" },
+  "type": "commonjs",
+  "files": ["index.js"],
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "keywords": ["llm", "proxy", "claude-code", "codex", "aider", "openai", "anthropic", "free-models"]
+}

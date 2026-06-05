@@ -11,7 +11,7 @@ import type {
 import { routeRequest, recordRateLimitHit, recordSuccess, type RouteResult } from '../services/router.js';
 import { recordRequest, recordTokens, setCooldown, getCooldownDurationForLimit } from '../services/ratelimit.js';
 import { checkQuota, bumpQuota } from '../services/quota.js';
-import { resolveOrgByClientKey } from '../db/index.js';
+import { resolveClientKeyFull } from '../db/index.js';
 import { contentToString } from '../lib/content.js';
 import {
   isRetryableError,
@@ -251,11 +251,13 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
   // Same unified-key auth as the proxy (accepts Bearer or x-api-key). The key
   // resolves to exactly one org — the tenant boundary for this endpoint.
   const token = extractApiToken(req);
-  const orgId = token ? await resolveOrgByClientKey(token) : null;
-  if (orgId === null) {
+  const keyCtx = token ? await resolveClientKeyFull(token) : null;
+  if (keyCtx === null) {
     res.status(401).json({ error: { message: 'Invalid API key', type: 'authentication_error' } });
     return;
   }
+  const { orgId, allowedModelIds } = keyCtx;
+  const allowedSet = allowedModelIds && allowedModelIds.length > 0 ? new Set(allowedModelIds) : undefined;
 
   const quota = await checkQuota(orgId);
   if (!quota.allowed) {
@@ -324,7 +326,7 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     let route: RouteResult;
     try {
-      route = await routeRequest(orgId, estimatedTotal, skipKeys.size > 0 ? skipKeys : undefined, preferredModel);
+      route = await routeRequest(orgId, estimatedTotal, skipKeys.size > 0 ? skipKeys : undefined, preferredModel, false, allowedSet);
     } catch (err: any) {
       const status = lastError ? 429 : (err.status ?? 503);
       const message = lastError
