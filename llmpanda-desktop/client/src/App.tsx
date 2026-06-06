@@ -14,6 +14,7 @@ import RequestsPage from '@/pages/RequestsPage'
 import ApiKeyPage from '@/pages/ApiKeyPage'
 import DocsPage from '@/pages/DocsPage'
 import AgentsPage from '@/pages/AgentsPage'
+import QuotaPage from '@/pages/QuotaPage'
 
 const queryClient = new QueryClient()
 
@@ -36,6 +37,7 @@ const ICONS: Record<string, ReactNode> = {
   apikey: <svg {...iconProps}><path d="M9 2v6M15 2v6M7 8h10v3a5 5 0 0 1-10 0zM12 16v6" /></svg>,
   docs: <svg {...iconProps}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>,
   agents: <svg {...iconProps}><path d="M8 9l3 3-3 3M13 15h3M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" /></svg>,
+  quota: <svg {...iconProps}><path d="M12 20v-6M6 20V10M18 20V4" /></svg>,
 }
 
 const NAV = [
@@ -46,6 +48,7 @@ const NAV = [
   { to: '/docs', label: 'Docs', key: 'docs' },
   { to: '/fallback', label: 'Fallback', key: 'fallback' },
   { to: '/analytics', label: 'Analytics', key: 'analytics' },
+  { to: '/quota', label: 'Quota', key: 'quota' },
   { to: '/logs', label: 'Logs', key: 'logs' },
 ]
 
@@ -186,6 +189,7 @@ function Layout() {
               <Route path="/docs" element={<DocsPage />} />
               <Route path="/fallback" element={<FallbackPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/quota" element={<QuotaPage />} />
               <Route path="/logs" element={<RequestsPage />} />
               <Route path="/test" element={<Navigate to="/playground" replace />} />
               <Route path="/health" element={<Navigate to="/keys" replace />} />
