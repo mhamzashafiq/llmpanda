@@ -31,6 +31,15 @@ export type Platform =
   | 'vertex'
   | 'kiro'
   | 'copilot'
+  | 'deepseek'
+  | 'xai'
+  | 'perplexity'
+  | 'fireworks'
+  | 'nebius'
+  | 'siliconflow'
+  | 'hyperbolic'
+  | 'novita'
+  | 'deepinfra'
   // User-configured OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM,
   // Ollama, any base_url). The endpoint URL lives on the api_keys row; see #117.
   | 'custom';

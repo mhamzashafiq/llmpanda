@@ -170,6 +170,17 @@ const NEW_PROVIDER_MODELS: Array<{ platform: string; model_id: string; display_n
   { platform: 'copilot', model_id: 'gpt-4o', display_name: 'GPT-4o (Copilot)', intelligence_rank: 4, speed_rank: 4, size_label: 'Large', context_window: 128000 },
   { platform: 'copilot', model_id: 'gpt-5.4', display_name: 'GPT-5.4 (Copilot)', intelligence_rank: 1, speed_rank: 5, size_label: 'Frontier', context_window: 264000 },
   { platform: 'copilot', model_id: 'gemini-2.5-pro', display_name: 'Gemini 2.5 Pro (Copilot)', intelligence_rank: 2, speed_rank: 6, size_label: 'Frontier', context_window: 1048576 },
+  { platform: 'deepseek', model_id: 'deepseek-chat', display_name: 'DeepSeek V3', intelligence_rank: 3, speed_rank: 5, size_label: 'Frontier', context_window: 65536 },
+  { platform: 'deepseek', model_id: 'deepseek-reasoner', display_name: 'DeepSeek R1', intelligence_rank: 2, speed_rank: 7, size_label: 'Frontier', context_window: 65536 },
+  { platform: 'xai', model_id: 'grok-code-fast-1', display_name: 'Grok Code Fast', intelligence_rank: 3, speed_rank: 2, size_label: 'Large', context_window: 256000 },
+  { platform: 'xai', model_id: 'grok-4', display_name: 'Grok 4', intelligence_rank: 1, speed_rank: 6, size_label: 'Frontier', context_window: 256000 },
+  { platform: 'perplexity', model_id: 'sonar-pro', display_name: 'Perplexity Sonar Pro', intelligence_rank: 4, speed_rank: 5, size_label: 'Large', context_window: 200000 },
+  { platform: 'fireworks', model_id: 'accounts/fireworks/models/deepseek-v3', display_name: 'DeepSeek V3 (Fireworks)', intelligence_rank: 3, speed_rank: 4, size_label: 'Frontier', context_window: 131072 },
+  { platform: 'nebius', model_id: 'Qwen/Qwen3-235B-A22B-Instruct-2507', display_name: 'Qwen3 235B (Nebius)', intelligence_rank: 2, speed_rank: 5, size_label: 'Frontier', context_window: 262144 },
+  { platform: 'siliconflow', model_id: 'deepseek-ai/DeepSeek-V3', display_name: 'DeepSeek V3 (SiliconFlow)', intelligence_rank: 3, speed_rank: 5, size_label: 'Frontier', context_window: 65536 },
+  { platform: 'hyperbolic', model_id: 'Qwen/Qwen3-235B-A22B-Instruct-2507', display_name: 'Qwen3 235B (Hyperbolic)', intelligence_rank: 2, speed_rank: 5, size_label: 'Frontier', context_window: 262144 },
+  { platform: 'novita', model_id: 'deepseek/deepseek-v3-0324', display_name: 'DeepSeek V3 (Novita)', intelligence_rank: 3, speed_rank: 5, size_label: 'Frontier', context_window: 128000 },
+  { platform: 'deepinfra', model_id: 'deepseek-ai/DeepSeek-V3', display_name: 'DeepSeek V3 (DeepInfra)', intelligence_rank: 3, speed_rank: 5, size_label: 'Frontier', context_window: 65536 },
 ];
 
 async function ensureProviderModels(): Promise<void> {

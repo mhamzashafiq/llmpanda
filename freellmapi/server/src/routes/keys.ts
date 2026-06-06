@@ -14,6 +14,7 @@ const PLATFORMS = [
   'openrouter', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama',
   'kilo', 'pollinations', 'llm7', 'huggingface', 'together', 'opencode', 'custom',
   'opencode-free', 'chutes', 'dashscope', 'modelscope', 'vertex', 'kiro', 'copilot',
+  'deepseek', 'xai', 'perplexity', 'fireworks', 'nebius', 'siliconflow', 'hyperbolic', 'novita', 'deepinfra',
 ] as const;
 
 const addKeySchema = z.object({

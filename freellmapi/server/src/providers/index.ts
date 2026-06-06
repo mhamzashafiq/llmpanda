@@ -200,6 +200,21 @@ register(new OpenAICompatProvider({
   timeoutMs: 120000,
 }));
 
+// Bulk OpenAI-compatible API-key providers (BYOK). Base URLs from 9router.
+for (const p of [
+  { platform: 'deepseek' as const, name: 'DeepSeek', baseUrl: 'https://api.deepseek.com' },
+  { platform: 'xai' as const, name: 'xAI (Grok)', baseUrl: 'https://api.x.ai/v1' },
+  { platform: 'perplexity' as const, name: 'Perplexity', baseUrl: 'https://api.perplexity.ai' },
+  { platform: 'fireworks' as const, name: 'Fireworks AI', baseUrl: 'https://api.fireworks.ai/inference/v1' },
+  { platform: 'nebius' as const, name: 'Nebius AI', baseUrl: 'https://api.studio.nebius.ai/v1' },
+  { platform: 'siliconflow' as const, name: 'SiliconFlow', baseUrl: 'https://api.siliconflow.cn/v1' },
+  { platform: 'hyperbolic' as const, name: 'Hyperbolic', baseUrl: 'https://api.hyperbolic.xyz/v1' },
+  { platform: 'novita' as const, name: 'Novita AI', baseUrl: 'https://api.novita.ai/v3/openai' },
+  { platform: 'deepinfra' as const, name: 'DeepInfra', baseUrl: 'https://api.deepinfra.com/v1/openai' },
+]) {
+  register(new OpenAICompatProvider({ platform: p.platform, name: p.name, baseUrl: p.baseUrl, timeoutMs: 120000 }));
+}
+
 // Google Vertex AI — service-account JSON key, OAuth token minted per request.
 register(new VertexProvider());
 
